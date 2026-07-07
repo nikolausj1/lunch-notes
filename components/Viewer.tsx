@@ -65,7 +65,7 @@ export function Viewer() {
         el.style.transform = flip ? "translate(-100%, -50%)" : "translate(0, -50%)";
       },
       onThread: (anchors, tension, vp) => {
-        threadRef.current?.setAttribute("d", threadPath(anchors, tension, vp.w));
+        threadRef.current?.setAttribute("d", threadPath(anchors, tension, vp));
         const byI = new Map(anchors.map((a) => [a.i, a]));
         monthMarks.forEach((m, k) => {
           const el = monthRefs.current[k];
@@ -178,6 +178,7 @@ export function Viewer() {
   }, [mode, focus, drawings]);
 
   const touchDrag = useRef<{ lastY: number; pointerId: number } | null>(null);
+  const press = useRef<{ x: number; y: number; t: number; idx: number | null } | null>(null);
 
   return (
     <div
@@ -192,7 +193,8 @@ export function Viewer() {
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
-        if (e.pointerType !== "mouse" && mode !== "scatter") {
+        press.current = { x: e.clientX, y: e.clientY, t: performance.now(), idx };
+        if (e.pointerType !== "mouse" && mode !== "scatter" && !eng.stackDragging) {
           touchDrag.current = { lastY: e.clientY, pointerId: e.pointerId };
         }
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -207,9 +209,22 @@ export function Viewer() {
           td.lastY = e.clientY;
         }
       }}
-      onPointerUp={() => {
-        engineRef.current?.onPointerUp();
+      onPointerUp={(e) => {
+        const eng = engineRef.current;
+        eng?.onPointerUp();
         touchDrag.current = null;
+        // a quick, stationary press in grid mode is a click: zoom the note
+        const p = press.current;
+        press.current = null;
+        if (
+          eng &&
+          p &&
+          mode === "grid" &&
+          performance.now() - p.t < 500 &&
+          Math.hypot(e.clientX - p.x, e.clientY - p.y) < 8
+        ) {
+          eng.onGridClick(p.idx);
+        }
       }}
       onPointerCancel={() => {
         engineRef.current?.onPointerUp();

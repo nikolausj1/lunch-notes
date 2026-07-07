@@ -24,26 +24,30 @@ export const TimelineThread = forwardRef<SVGPathElement, { visible: boolean }>(
   }
 );
 
-/** Builds the sagging-thread path through note anchor points. */
+import { timelineGeometry, Viewport } from "@/lib/layouts";
+
+/**
+ * Builds the sagging-rope path: in over the viewer's left shoulder,
+ * through the hanging notes, off to the vanishing point. Sag scales with
+ * segment length so the rope tightens naturally into the distance.
+ */
 export function threadPath(
   anchors: { x: number; y: number }[],
   tension: number,
-  w: number
+  vp: Viewport
 ): string {
-  if (anchors.length === 0) return "";
+  const { shoulder, van } = timelineGeometry(vp);
   // generous slack at rest, pulled nearly straight while scrolling;
   // tension can overshoot past 1 (spring), snapping the rope taut
-  const sagK = Math.max(1, (1 - tension) * 22 + 3);
-  const first = anchors[0];
-  const last = anchors[anchors.length - 1];
-  let d = `M ${-40} ${first.y + sagK} L ${first.x} ${first.y}`;
-  for (let i = 1; i < anchors.length; i++) {
-    const a = anchors[i - 1];
-    const b = anchors[i];
-    const mx = (a.x + b.x) / 2;
-    const my = (a.y + b.y) / 2 + sagK;
-    d += ` Q ${mx} ${my} ${b.x} ${b.y}`;
+  const slack = Math.max(0.02, (1 - tension) * 0.16 + 0.03);
+  const pts = [shoulder, ...anchors, van];
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    const segLen = Math.hypot(b.x - a.x, b.y - a.y);
+    const sag = segLen * slack;
+    d += ` Q ${(a.x + b.x) / 2} ${(a.y + b.y) / 2 + sag} ${b.x} ${b.y}`;
   }
-  d += ` L ${w + 40} ${last.y + sagK}`;
   return d;
 }

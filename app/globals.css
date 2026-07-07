@@ -162,17 +162,28 @@ body {
   transition: transform 0.16s ease-out, box-shadow 0.25s ease;
 }
 
-/* stack: --peel bends the note up around its sticky top edge, like pulling
-   a post-it off a pad (also runs in reverse when re-sticking a note) */
+/* stack: --peel curls the note up around its semi-glued top edge, like
+   pulling a post-it off a pad. --peelZ skews the curl when grabbed by a
+   corner. Runs in reverse when a note is pressed back on. */
 .viewer[data-mode="stack"] .note-paper {
-  transform-origin: 50% 3%;
-  transform: perspective(1100px) rotateX(calc(var(--peel, 0) * 58deg));
+  transform-origin: 50% 2%;
+  transform: perspective(950px) rotateX(calc(var(--peel, 0) * 74deg))
+    rotateZ(calc(var(--peelZ, 0) * 1deg));
+  border-bottom-left-radius: calc(var(--peel, 0) * 34%);
+  border-bottom-right-radius: calc(var(--peel, 0) * 34%);
   transition: box-shadow 0.25s ease;
 }
 
-/* timeline: notes pivot from where they're taped to the rope */
+/* timeline: notes pivot from where they're taped to the rope; --fb is the
+   front/back pendulum swing, --blur the depth-of-field */
 .viewer[data-mode="timeline"] .note {
   transform-origin: 50% -6%;
+  filter: blur(calc(var(--blur, 0) * 1px));
+}
+
+.viewer[data-mode="timeline"] .note-paper {
+  transform: perspective(900px) rotateX(calc(var(--fb, 0) * 1deg));
+  transform-origin: 50% -8%;
 }
 
 .note[data-state="hover"] .note-paper {
@@ -410,8 +421,8 @@ body {
 
 .size-control {
   position: fixed;
-  top: 96px;
-  left: 22px;
+  top: 84px;
+  right: 22px;
   z-index: 5000;
   display: flex;
   align-items: center;
@@ -458,7 +469,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .size-control { top: 128px; left: 12px; }
+  .size-control { top: 128px; right: 12px; }
 }
 
 /* --------------------------------------- scatter hold-to-inspect label */

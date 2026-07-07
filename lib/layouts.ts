@@ -8,6 +8,8 @@ export type NoteTarget = {
   s: number; // scale (1 = base note size)
   z: number; // z-index
   hidden?: boolean; // fully skip rendering (deep stack layers)
+  blur?: number; // px, depth-of-field (timeline)
+  opacity?: number; // 0..1 (timeline pass-behind fade)
 };
 
 export type Viewport = { w: number; h: number };
@@ -37,11 +39,11 @@ export function scatterTargets(
   const n = drawings.length;
 
   // Organic distribution: jittered poisson-ish placement on a shuffled
-  // grid so notes overlap a little but nobody gets buried dead-center.
-  const cols = Math.max(3, Math.floor(w / (size * 1.18)));
+  // grid so notes overlap generously and the table reads as covered.
+  const cols = Math.max(3, Math.floor(w / (size * 0.92)));
   const rows = Math.ceil(n / cols);
   const cellW = w / cols;
-  const cellH = size * 1.12;
+  const cellH = size * 0.86;
   const height = Math.max(vp.h, topSafe + rows * cellH + margin * 1.5);
   const h = height - margin - topSafe;
   const cellH2 = h / rows;
@@ -138,16 +140,17 @@ export function stackTargets(
   return drawings.map((d, i) => {
     const depth = n - 1 - i - peeled; // 0 = current top, negative = peeled away
     if (depth < 0) {
+      // peeled notes fly UP off the pad and pile above the stack
       const k = -depth; // 1 = most recently peeled
       const r1 = hash(d.id + ":fx");
       const r2 = hash(d.id + ":fy");
       const r3 = hash(d.id + ":fr");
       return {
-        x: cx + (r1 - 0.5) * Math.min(vp.w * 0.42, size * 4.6),
-        y: vp.h - size * 0.85 - r2 * size * 0.55,
+        x: cx + (r1 - 0.5) * Math.min(vp.w * 0.52, size * 5.4),
+        y: size * (1.05 + r2 * 0.6),
         r: (r3 - 0.5) * 56,
-        s: 1.25,
-        z: 4000 - k, // freshest peel sits on top of the floor pile
+        s: 1.15,
+        z: 4000 - k, // freshest peel sits on top of the pile
         hidden: k > 30,
       };
     }
@@ -170,47 +173,60 @@ export function stackTargets(
 
 export type TimelineInfo = {
   focusIndex: number;
-  /** anchor points (x,y) where visible notes hang, for drawing the thread */
+  /** anchor points (x,y) where visible notes hang, for drawing the rope */
   anchors: { x: number; y: number; i: number }[];
 };
 
+/** The rope runs from over the viewer's left shoulder into the distance. */
+export function timelineGeometry(vp: Viewport) {
+  return {
+    shoulder: { x: -vp.w * 0.06, y: vp.h * 1.04 },
+    focus: { x: vp.w * 0.34, y: vp.h * 0.4 },
+    van: { x: vp.w * 0.86, y: vp.h * 0.22 }, // vanishing point
+  };
+}
+
 /**
- * Notes hang from a gently curved clothesline. `t` is a continuous
- * position in note-index units (0 = oldest). Scroll changes t.
- * `swing` (deg) is the inertial pendulum offset supplied by the engine.
+ * 3D clothesline: the rope comes in over the viewer's left shoulder and
+ * recedes to a vanishing point. `t` is a continuous position in note-index
+ * units. The focused note (u = 0) is sharp; notes about to pass over the
+ * shoulder (u < 0) are huge and out-of-focus; notes far down the rope
+ * (u >> 0, older) shrink and soften into the distance.
  */
 export function timelineTargets(
   drawings: LunchDrawing[],
   vp: Viewport,
-  t: number,
-  swing = 0
+  t: number
 ): { targets: NoteTarget[]; info: TimelineInfo } {
   const n = drawings.length;
   const size = baseNoteSize(vp);
-  const spacing = Math.max(size * 1.2, vp.w * 0.125);
-  const cx = vp.w / 2;
-  const threadY = vp.h * 0.3;
+  const { focus, van } = timelineGeometry(vp);
   const focusIndex = Math.max(0, Math.min(n - 1, Math.round(t)));
   const anchors: TimelineInfo["anchors"] = [];
 
   const targets = drawings.map((d, i) => {
-    const off = i - t; // 0 = focused, in note units
-    const x = cx + off * spacing;
-    if (Math.abs(off) > (vp.w / spacing) * 0.75 + 2) {
-      return { x, y: threadY + size, r: 0, s: 0.7, z: 0, hidden: true };
+    const u = t - i; // 0 = focused; + = older, into the distance; - = passed by
+    const p = Math.pow(0.74, u); // perspective factor: 1 at focus, ->0 far away
+    if (p < 0.055 || u < -1.9) {
+      return { x: van.x, y: van.y, r: 0, s: 0.1, z: 0, hidden: true };
     }
-    // thread sags a touch toward the middle of the viewport
-    const sag = Math.sin(((x / vp.w) * Math.PI)) * vp.h * 0.03;
-    const focus = Math.max(0, 1 - Math.abs(off)); // 1 at focus, 0 beyond 1 unit
-    const sway = (hash(d.id + ":tw") - 0.5) * 6;
-    const anchorY = threadY + sag;
-    anchors.push({ x, y: anchorY, i });
+    const ax = van.x + (focus.x - van.x) * p;
+    const ay = van.y + (focus.y - van.y) * p;
+    const s = Math.min(4.4, 2.1 * p);
+    // depth of field: too-close notes are very soft, far ones gently soft
+    const blur =
+      u < 0 ? Math.min(16, -u * 9) : Math.max(0, Math.min(9, (u - 2.4) * 1.5));
+    const opacity = u < -0.45 ? Math.max(0, 1 - (-u - 0.45) / 1.15) : 1;
+    if (p > 0.2 && u > -1.2) anchors.push({ x: ax, y: ay, i });
+    const sway = (hash(d.id + ":tw") - 0.5) * 5;
     return {
-      x,
-      y: anchorY + size * (0.58 + 0.62 * focus), // focused note hangs lower & bigger
-      r: sway * (1 - focus * 0.8) + swing * (0.7 + hash(d.id + ":sw") * 0.6),
-      s: 0.78 + focus * 1.42,
-      z: 100 - Math.round(Math.abs(off) * 10),
+      x: ax,
+      y: ay + size * s * 0.56, // hangs below its anchor on the rope
+      r: sway * (0.4 + 0.6 * Math.min(1, u > 0 ? u : 0)),
+      s,
+      z: Math.round(2000 * p),
+      blur,
+      opacity,
     };
   });
 
