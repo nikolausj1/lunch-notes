@@ -178,15 +178,15 @@ export type TimelineInfo = {
 };
 
 /**
- * The rope runs from behind the viewer nearly straight into the background —
- * only a small angle, so receding notes overlap. The focused note hangs
- * front and center.
+ * The line of notes recedes almost straight back — barely any lateral
+ * drift, so the past reads as a deck stacked into the distance. Notes
+ * that pass the viewer exit big through the top corner of the frame.
  */
 export function timelineGeometry(vp: Viewport) {
   return {
-    shoulder: { x: vp.w * 0.24, y: vp.h * 1.18 },
-    focus: { x: vp.w * 0.47, y: vp.h * 0.38 },
-    van: { x: vp.w * 0.64, y: vp.h * 0.16 }, // vanishing point
+    focus: { x: vp.w * 0.5, y: vp.h * 0.4 },
+    van: { x: vp.w * 0.555, y: vp.h * 0.27 }, // vanishing point
+    exit: { x: vp.w * 0.12, y: -vp.h * 0.34 }, // top-left, over the camera
   };
 }
 
@@ -208,31 +208,46 @@ export function timelineTargets(
   const focusIndex = Math.max(0, Math.min(n - 1, Math.round(t)));
   const anchors: TimelineInfo["anchors"] = [];
 
+  const { exit } = timelineGeometry(vp);
   const targets = drawings.map((d, i) => {
     const u = t - i; // 0 = focused; + = older, into the distance; - = passed by
-    // perspective factor: 1 at focus, ->0 far away. Passing notes (u < 0)
-    // blow up much faster — they rush right over the camera lens.
-    const p = u < 0 ? Math.pow(0.74, u * 2.3) : Math.pow(0.74, u);
-    if (p < 0.055 || u < -2.1) {
+    if (u < 0) {
+      // passing the viewer: rush up through the top corner of the frame,
+      // getting bigger and softer the whole way out
+      if (u < -2.1) return { x: exit.x, y: exit.y, r: 0, s: 0.1, z: 0, hidden: true };
+      const p = Math.pow(0.74, u * 2.3);
+      const k = Math.pow(Math.min(1, -u / 1.7), 1.15);
+      const cy0 = focus.y + size * 2.1 * 0.56;
+      return {
+        x: focus.x + (exit.x - focus.x) * k,
+        y: cy0 + (exit.y - cy0) * k,
+        r: (hash(d.id + ":tw") - 0.5) * 12 * k,
+        s: Math.min(9, 2.1 * p),
+        blur: Math.min(22, -u * 12),
+        opacity: u < -0.9 ? Math.max(0, 1 - (-u - 0.9) / 1.0) : 1,
+        z: Math.round(2000 * p),
+      };
+    }
+    const p = Math.pow(0.74, u); // perspective factor: 1 at focus, ->0 far away
+    if (p < 0.055) {
       return { x: van.x, y: van.y, r: 0, s: 0.1, z: 0, hidden: true };
     }
-    const ax = van.x + (focus.x - van.x) * p;
+    // slight per-note drift so the receding deck isn't perfectly aligned
+    const jx = (hash(d.id + ":jx") - 0.5) * size * 0.3 * (1 - p);
+    const ax = van.x + (focus.x - van.x) * p + jx;
     const ay = van.y + (focus.y - van.y) * p;
     const s = Math.min(7, 2.1 * p);
-    // depth of field: too-close notes are very soft, far ones gently soft
-    const blur =
-      u < 0 ? Math.min(20, -u * 11) : Math.max(0, Math.min(9, (u - 2.4) * 1.5));
-    const opacity = u < -0.6 ? Math.max(0, 1 - (-u - 0.6) / 1.1) : 1;
-    if (p > 0.18 && u > -1.2) anchors.push({ x: ax, y: ay, i });
+    const blur = Math.max(0, Math.min(9, (u - 2.4) * 1.5));
+    if (p > 0.18) anchors.push({ x: ax, y: ay, i });
     const sway = (hash(d.id + ":tw") - 0.5) * 5;
     return {
       x: ax,
-      y: ay + size * s * 0.56, // hangs below its anchor on the rope
-      r: sway * (0.4 + 0.6 * Math.min(1, u > 0 ? u : 0)),
+      y: ay + size * s * 0.56, // hangs below its anchor point
+      r: sway * (0.4 + 0.6 * Math.min(1, u)),
       s,
       z: Math.round(2000 * p),
       blur,
-      opacity,
+      opacity: 1,
     };
   });
 

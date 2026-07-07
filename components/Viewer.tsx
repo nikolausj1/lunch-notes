@@ -9,7 +9,6 @@ import { NoteCard } from "./NoteCard";
 import { ModeSelector } from "./ModeSelector";
 import { DeskSurface } from "./DeskSurface";
 import { MetadataPanel, HoldMetadata } from "./MetadataPanel";
-import { TimelineThread, threadPath } from "./TimelineThread";
 import { LoadingExperience } from "./LoadingExperience";
 
 const MIN_LOAD_MS = 1100;
@@ -32,7 +31,6 @@ export function Viewer() {
   const engineRef = useRef<NotesEngine | null>(null);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const holdTipRef = useRef<HTMLDivElement | null>(null);
-  const threadRef = useRef<SVGPathElement | null>(null);
   const monthRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const attach = useMemo(
     () => (i: number, el: HTMLDivElement | null) => engineRef.current?.attach(i, el),
@@ -64,8 +62,7 @@ export function Viewer() {
         el.style.top = `${y}px`;
         el.style.transform = flip ? "translate(-100%, -50%)" : "translate(0, -50%)";
       },
-      onThread: (anchors, tension, vp) => {
-        threadRef.current?.setAttribute("d", threadPath(anchors, tension, vp));
+      onThread: (anchors) => {
         const byI = new Map(anchors.map((a) => [a.i, a]));
         monthMarks.forEach((m, k) => {
           const el = monthRefs.current[k];
@@ -251,7 +248,6 @@ export function Viewer() {
     >
       <DeskSurface />
 
-      <TimelineThread ref={threadRef} visible={mode === "timeline"} />
       <div className="thread-months" data-visible={mode === "timeline"} aria-hidden>
         {monthMarks.map((m, k) => (
           <span

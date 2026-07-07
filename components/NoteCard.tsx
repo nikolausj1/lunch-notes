@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, CSSProperties } from "react";
 import { LunchDrawing } from "@/lib/types";
 import { formatShort } from "@/lib/dates";
 
@@ -20,7 +20,10 @@ function NoteCardInner({ drawing, index, featured, attach }: Props) {
       data-state="rest"
       ref={(el) => attach(index, el)}
     >
-      <div className="note-paper">
+      <div
+        className="note-paper"
+        style={{ "--note-img": `url(${drawing.thumbSrc})` } as CSSProperties}
+      >
         <img
           className="note-img"
           src={drawing.thumbSrc}

@@ -167,28 +167,33 @@ body {
    corner. Runs in reverse when a note is pressed back on. */
 .viewer[data-mode="stack"] .note-paper {
   transform-origin: 50% 2%;
-  transform: perspective(950px) rotateX(calc(var(--peel, 0) * 38deg))
+  /* a wide flap so the next note in the pad shows through under the peel */
+  transform: perspective(950px) rotateX(calc(var(--peel, 0) * 56deg))
     rotateZ(calc(var(--peelZ, 0) * 1deg));
   border-bottom-left-radius: calc(var(--peel, 0) * 30%);
   border-bottom-right-radius: calc(var(--peel, 0) * 30%);
   transition: box-shadow 0.25s ease;
 }
 
-/* the bottom of the note curls over, showing the paper's underside */
+/* the bottom of the note curls over, showing the paper's underside —
+   tinted by the note's own image so each post-it curls in its own color */
 .note-underside {
   position: absolute;
   left: -1%;
   right: -1%;
   bottom: -1%;
-  height: calc(var(--peel, 0) * 56%);
+  height: calc(var(--peel, 0) * 60%);
   opacity: clamp(0, calc(var(--peel, 0) * 7), 1);
-  background: linear-gradient(
-    to top,
-    #fdf8cd 0%,
-    #f3eaad 55%,
-    #d9cd85 96%,
-    #b8ab61 100%
-  );
+  background-image:
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.62) 0%,
+      rgba(255, 255, 255, 0.72) 55%,
+      rgba(140, 122, 70, 0.28) 100%
+    ),
+    var(--note-img, linear-gradient(#f6ee9f, #f6ee9f));
+  background-size: cover;
+  background-position: center bottom;
   border-radius: 46% 46% 4px 4px / calc(var(--peel, 0) * 30%) calc(var(--peel, 0) * 30%) 4px 4px;
   box-shadow: 0 -3px 9px rgba(80, 65, 40, calc(var(--peel, 0) * 0.4));
   pointer-events: none;
