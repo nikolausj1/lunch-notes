@@ -148,12 +148,31 @@ body {
   inset: 0;
   background: #f6ee9f;
   overflow: hidden;
-  transform: rotate(calc(var(--peel, 0) * -5deg));
   box-shadow:
     0 1px 1.5px rgba(80, 65, 40, 0.22),
     0 3px 7px rgba(80, 65, 40, 0.14),
     inset 0 -1px 2px rgba(120, 100, 60, 0.12);
   transition: box-shadow 0.25s ease;
+}
+
+/* grid: hovered note tilts in 3D toward the pointer (engine sets --tx/--ty) */
+.viewer[data-mode="grid"] .note-paper {
+  transform: perspective(700px) rotateX(calc(var(--ty, 0) * 1deg))
+    rotateY(calc(var(--tx, 0) * 1deg));
+  transition: transform 0.16s ease-out, box-shadow 0.25s ease;
+}
+
+/* stack: --peel bends the note up around its sticky top edge, like pulling
+   a post-it off a pad (also runs in reverse when re-sticking a note) */
+.viewer[data-mode="stack"] .note-paper {
+  transform-origin: 50% 3%;
+  transform: perspective(1100px) rotateX(calc(var(--peel, 0) * 58deg));
+  transition: box-shadow 0.25s ease;
+}
+
+/* timeline: notes pivot from where they're taped to the rope */
+.viewer[data-mode="timeline"] .note {
+  transform-origin: 50% -6%;
 }
 
 .note[data-state="hover"] .note-paper {
@@ -178,17 +197,18 @@ body {
   pointer-events: none;
 }
 
-/* corner curl shading while peeling */
+/* shading while the bottom edge lifts during a peel */
 .note-curl {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   pointer-events: none;
   opacity: var(--peel, 0);
-  background:
-    linear-gradient(315deg, rgba(255, 255, 255, 0.75) 0%, rgba(90, 75, 45, 0.28) 9%, rgba(0, 0, 0, 0) 26%);
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(90, 75, 45, 0.22) 26%,
+    rgba(0, 0, 0, 0) 55%
+  );
 }
 
 /* masking tape shown in timeline mode */
@@ -310,25 +330,27 @@ body {
 }
 
 .meta-panel-stack {
-  right: 5vw;
+  /* hugs the right edge of the stack (stack note is ~2.6x base size) */
+  left: calc(50% + clamp(160px, 24vw, 320px));
   top: 50%;
   transform: translateY(-50%);
 }
 
 .meta-panel-timeline {
   left: 50%;
-  bottom: 7vh;
+  bottom: 8vh;
   transform: translateX(-50%);
+  text-align: center;
 }
 
+.meta-panel-timeline .meta-row {
+  justify-content: center;
+}
+
+/* no container — the words sit directly on the desk */
 .meta-card {
-  background: var(--paper);
-  padding: 14px 18px;
   min-width: 190px;
-  max-width: 260px;
-  box-shadow:
-    0 1px 2px rgba(80, 65, 40, 0.16),
-    0 8px 22px rgba(80, 65, 40, 0.14);
+  max-width: 280px;
 }
 
 .meta-date {
@@ -373,48 +395,80 @@ body {
 
 @media (max-width: 760px) {
   .meta-panel-stack {
-    right: auto;
-    top: auto;
+    /* the floor pile owns the bottom on mobile — metadata goes up top */
+    top: 84px;
     left: 50%;
-    bottom: 5vh;
     transform: translateX(-50%);
+    text-align: center;
   }
-  .meta-card { padding: 10px 14px; min-width: 160px; }
+  .meta-panel-stack .meta-row { justify-content: center; }
+  .meta-card { min-width: 160px; }
   .meta-title { font-size: 20px; }
 }
 
-/* ------------------------------------------------------ scatter tooltip */
+/* -------------------------------------------------- grid size control */
 
+.size-control {
+  position: fixed;
+  top: 96px;
+  left: 22px;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 8px;
+  background: rgba(255, 253, 246, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 2px rgba(80, 65, 40, 0.14),
+    0 5px 14px rgba(80, 65, 40, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.size-control-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-right: 4px;
+}
+
+.size-btn {
+  border: 0;
+  background: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.size-btn:hover { color: var(--ink); }
+
+.size-btn[data-active="true"] {
+  background: linear-gradient(180deg, #c99045, #b97f36);
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(150, 100, 30, 0.3);
+}
+
+@media (max-width: 640px) {
+  .size-control { top: 128px; left: 12px; }
+}
+
+/* --------------------------------------- scatter hold-to-inspect label */
+
+/* wrapper is positioned every frame by the engine, riding the held note */
 .scatter-tip {
   position: fixed;
   z-index: 4800;
-  transform: translate(-50%, -100%);
-  background: var(--paper);
-  padding: 7px 12px 8px;
-  box-shadow: 0 2px 5px rgba(80, 65, 40, 0.18), 0 8px 20px rgba(80, 65, 40, 0.14);
   pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  white-space: nowrap;
-}
-
-.tip-date {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-soft);
-}
-
-.tip-title {
-  font-family: var(--font-hand), cursive;
-  font-size: 19px;
-  color: var(--ink);
-}
-
-.tip-child {
-  font-size: 11px;
-  color: var(--ink-soft);
+  width: 240px;
 }
 
 /* ------------------------------------------------------------- thread */

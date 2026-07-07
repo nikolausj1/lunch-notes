@@ -8,7 +8,7 @@ import { monthKey, formatMonth } from "@/lib/dates";
 import { NoteCard } from "./NoteCard";
 import { ModeSelector } from "./ModeSelector";
 import { DeskSurface } from "./DeskSurface";
-import { MetadataPanel, ScatterTooltip } from "./MetadataPanel";
+import { MetadataPanel, HoldMetadata } from "./MetadataPanel";
 import { TimelineThread, threadPath } from "./TimelineThread";
 import { LoadingExperience } from "./LoadingExperience";
 
@@ -24,13 +24,14 @@ export function Viewer() {
   const [count] = useState(getCount);
   const drawings = useMemo(() => getDrawings(count), [count]);
   const [mode, setMode] = useState<ViewMode>("scatter");
+  const [gridCols, setGridCols] = useState(5);
   const [focus, setFocus] = useState<number | null>(null);
-  const [hover, setHover] = useState<number | null>(null);
-  const [tipPos, setTipPos] = useState<{ x: number; y: number } | null>(null);
+  const [held, setHeld] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const engineRef = useRef<NotesEngine | null>(null);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const holdTipRef = useRef<HTMLDivElement | null>(null);
   const threadRef = useRef<SVGPathElement | null>(null);
   const monthRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const attach = useMemo(
@@ -55,15 +56,13 @@ export function Viewer() {
   useEffect(() => {
     const eng = new NotesEngine(drawings, {
       onFocus: (i) => setFocus(i),
-      onHover: (i) => {
-        setHover(i);
-        if (i != null && engineRef.current) {
-          const n = engineRef.current.notes[i];
-          const size = engineRef.current.noteSize;
-          setTipPos({ x: n.x, y: n.y - size * 0.75 });
-        } else {
-          setTipPos(null);
-        }
+      onHover: (i) => setHeld(i),
+      onHoldPos: (x, y, flip) => {
+        const el = holdTipRef.current;
+        if (!el) return;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.transform = flip ? "translate(-100%, -50%)" : "translate(0, -50%)";
       },
       onThread: (anchors, tension, vp) => {
         threadRef.current?.setAttribute("d", threadPath(anchors, tension, vp.w));
@@ -158,9 +157,13 @@ export function Viewer() {
 
   const changeMode = (m: ViewMode) => {
     setMode(m);
-    setHover(null);
-    setTipPos(null);
+    setHeld(null);
     engineRef.current?.setMode(m);
+  };
+
+  const changeGridCols = (cols: number) => {
+    setGridCols(cols);
+    engineRef.current?.setGridCols(cols);
   };
 
   // full-res images near the focused note in stack/timeline
@@ -249,18 +252,43 @@ export function Viewer() {
       </div>
 
       <ModeSelector mode={mode} onChange={changeMode} />
+
+      {mode === "grid" && (
+        <div className="size-control" role="group" aria-label="Note size">
+          <span className="size-control-label">note size</span>
+          {([
+            { label: "S", cols: 7 },
+            { label: "M", cols: 5 },
+            { label: "L", cols: 3 },
+          ] as const).map((o) => (
+            <button
+              key={o.label}
+              className="size-btn"
+              data-active={gridCols === o.cols}
+              onClick={() => changeGridCols(o.cols)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <MetadataPanel
         drawing={focus != null ? drawings[focus] ?? null : null}
         mode={mode}
       />
-      <ScatterTooltip
-        drawing={hover != null ? drawings[hover] ?? null : null}
-        pos={tipPos}
+      <HoldMetadata
+        ref={holdTipRef}
+        drawing={held != null ? drawings[held] ?? null : null}
       />
 
-      {(mode === "stack" || mode === "timeline") && loaded && (
+      {(mode === "stack" || mode === "timeline" || mode === "scatter") && loaded && (
         <div className="scroll-hint" key={mode}>
-          {mode === "stack" ? "scroll to peel" : "scroll to travel in time"}
+          {mode === "stack"
+            ? "scroll to peel"
+            : mode === "timeline"
+              ? "scroll to travel in time"
+              : "hold a note to look closer — scroll for more"}
         </div>
       )}
 

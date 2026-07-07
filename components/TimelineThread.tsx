@@ -31,7 +31,9 @@ export function threadPath(
   w: number
 ): string {
   if (anchors.length === 0) return "";
-  const sagK = (1 - tension) * 16 + 3; // slack when idle, taut while scrolling
+  // generous slack at rest, pulled nearly straight while scrolling;
+  // tension can overshoot past 1 (spring), snapping the rope taut
+  const sagK = Math.max(1, (1 - tension) * 22 + 3);
   const first = anchors[0];
   const last = anchors[anchors.length - 1];
   let d = `M ${-40} ${first.y + sagK} L ${first.x} ${first.y}`;

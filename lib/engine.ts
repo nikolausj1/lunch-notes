@@ -28,15 +28,17 @@ type NoteSim = {
 export type EngineCallbacks = {
   /** focused note index (stack top / timeline focus) or null */
   onFocus?: (index: number | null, mode: ViewMode) => void;
-  /** scatter hover tooltip */
+  /** scatter hold-to-inspect: index while a note is held, null on release */
   onHover?: (index: number | null) => void;
+  /** viewport-space anchor for the held note's metadata, every frame */
+  onHoldPos?: (x: number, y: number, flip: boolean) => void;
   /** timeline thread geometry, called every frame while in timeline */
   onThread?: (anchors: TimelineInfo["anchors"], tension: number, vp: Viewport) => void;
   /** stack peel progress 0..1 for the current top note */
   onPeel?: (progress: number) => void;
 };
 
-const PEEL_DIST = 340; // wheel px to fully peel one note
+const PEEL_DIST = 280; // wheel px to fully peel one note
 
 export class NotesEngine {
   drawings: LunchDrawing[];
@@ -47,11 +49,14 @@ export class NotesEngine {
   cb: EngineCallbacks;
 
   // grid
-  scroll = 0; scrollTarget = 0; contentHeight = 0;
+  scroll = 0; scrollTarget = 0; contentHeight = 0; gridCols = 5;
+  gridTiltI = -1; gridTiltX = 0; gridTiltY = 0;
+  // scatter: the desk is a virtual table taller than the viewport
+  scatterScroll = 0; scatterScrollTarget = 0; scatterH = 0;
   // stack
   peeled = 0; peelAccum = 0;
   // timeline
-  t = 0; tTarget = 0; tension = 0;
+  t = 0; tTarget = 0; tension = 0; tensionVel = 0; swing = 0;
   // scatter pointer state
   pointer = { x: -9999, y: -9999, px: -9999, py: -9999, down: false, sweeping: false };
   dragIndex: number | null = null;
@@ -122,17 +127,29 @@ export class NotesEngine {
     this.setHover(null);
     this.notes.forEach((n) => n.el?.style.setProperty("--peel", "0"));
     if (mode === "stack") { this.peelAccum = 0; this.cb.onPeel?.(0); }
-    if (mode === "timeline") { this.tTarget = this.t = Math.max(0, this.drawings.length - 1); }
+    if (mode === "timeline") {
+      this.tTarget = this.t = Math.max(0, this.drawings.length - 1);
+      this.tension = this.tensionVel = this.swing = 0;
+    }
     if (mode === "grid") { this.scroll = this.scrollTarget = 0; }
+    if (mode === "scatter") { this.scatterScroll = this.scatterScrollTarget = 0; }
     this.applyMode(mode, true);
+  }
+
+  setGridCols(cols: number) {
+    this.gridCols = cols;
+    if (this.mode === "grid") this.applyMode("grid", false);
   }
 
   private applyMode(mode: ViewMode, stagger: boolean) {
     let targets: NoteTarget[];
     if (mode === "scatter") {
-      targets = scatterTargets(this.drawings, this.vp);
+      const sc = scatterTargets(this.drawings, this.vp);
+      targets = sc.targets;
+      this.scatterH = sc.info.height;
+      this.scatterScrollTarget = Math.min(this.scatterScrollTarget, this.maxScatterScroll);
     } else if (mode === "grid") {
-      const g = gridTargets(this.drawings, this.vp);
+      const g = gridTargets(this.drawings, this.vp, this.gridCols);
       targets = g.targets;
       this.contentHeight = g.info.contentHeight;
       this.scrollTarget = Math.min(this.scrollTarget, this.maxScroll);
@@ -159,6 +176,10 @@ export class NotesEngine {
     return Math.max(0, this.contentHeight - this.vp.h);
   }
 
+  get maxScatterScroll() {
+    return Math.max(0, this.scatterH - this.vp.h);
+  }
+
   get stackTopIndex() {
     return Math.max(0, this.drawings.length - 1 - this.peeled);
   }
@@ -180,7 +201,13 @@ export class NotesEngine {
   // ------------------------------------------------------------- input
 
   onWheel(dy: number) {
-    if (this.mode === "grid") {
+    if (this.mode === "scatter") {
+      // scroll down the virtual table to reach more notes
+      this.scatterScrollTarget = Math.max(
+        0,
+        Math.min(this.maxScatterScroll, this.scatterScrollTarget + dy)
+      );
+    } else if (this.mode === "grid") {
       this.scrollTarget = Math.max(0, Math.min(this.maxScroll, this.scrollTarget + dy));
     } else if (this.mode === "timeline") {
       // scroll down travels back in time (newest sits at the end)
@@ -188,14 +215,16 @@ export class NotesEngine {
       this.tTarget = Math.max(0, Math.min(n - 1, this.tTarget - dy / 260));
     } else if (this.mode === "stack") {
       this.peelAccum += dy;
-      if (this.peelAccum < 0) {
-        // un-peel: bring the last peeled note back
-        if (this.peeled > 0 && this.peelAccum < -40) {
+      if (this.peelAccum <= -44) {
+        // un-peel: pick the last note off the floor and press it back on
+        if (this.peeled > 0) {
           this.peeled--;
-          this.peelAccum = 0;
           this.applyMode("stack", false);
           this.updateFocus(this.stackTopIndex);
-        } else if (this.peelAccum < 0) this.peelAccum = 0;
+        }
+        this.peelAccum = 0;
+      } else if (this.peelAccum < 0 && this.peeled === 0) {
+        this.peelAccum = 0; // nothing on the floor to bring back
       }
       if (this.peelAccum >= PEEL_DIST) {
         if (this.peeled < this.drawings.length - 1) {
@@ -203,9 +232,13 @@ export class NotesEngine {
           this.peelAccum = 0;
           this.applyMode("stack", false);
           this.updateFocus(this.stackTopIndex);
-          // give the freshly peeled note a fling toward the discard pile
+          // the freed note drops toward the floor pile
           const peeledNote = this.notes[this.stackTopIndex + 1];
-          if (peeledNote) { peeledNote.vx = -700; peeledNote.vy = -950; }
+          if (peeledNote) {
+            peeledNote.vx = (hash(this.drawings[this.stackTopIndex + 1].id) - 0.5) * 500;
+            peeledNote.vy = 1150;
+            peeledNote.vr = (hash(this.drawings[this.stackTopIndex + 1].id + "fl") - 0.5) * 220;
+          }
         } else {
           this.peelAccum = PEEL_DIST - 1;
         }
@@ -216,6 +249,8 @@ export class NotesEngine {
 
   /** role: index of note pressed, or null for empty surface */
   onPointerDown(x: number, y: number, noteIndex: number | null) {
+    // pointer lives in desk space; in scatter the desk scrolls
+    if (this.mode === "scatter") y += this.scatterScroll;
     this.pointer.down = true;
     this.pointer.x = this.pointer.px = x;
     this.pointer.y = this.pointer.py = y;
@@ -225,17 +260,20 @@ export class NotesEngine {
       const n = this.notes[noteIndex];
       this.dragOffset = { x: n.x - x, y: n.y - y };
       n.z = ++this.zCounter;
+      this.setHover(noteIndex); // picking up a note reveals its metadata
     } else {
       this.pointer.sweeping = true;
     }
   }
 
   onPointerMove(x: number, y: number) {
+    if (this.mode === "scatter") y += this.scatterScroll;
     this.pointer.x = x;
     this.pointer.y = y;
   }
 
   onPointerUp() {
+    this.setHover(null);
     this.pointer.down = false;
     this.pointer.sweeping = false;
     if (this.dragIndex != null) {
@@ -278,6 +316,10 @@ export class NotesEngine {
     const { mode } = this;
 
     // smooth internal scroll positions
+    if (mode === "scatter") {
+      this.scatterScroll +=
+        (this.scatterScrollTarget - this.scatterScroll) * Math.min(1, dt * 10);
+    }
     if (mode === "grid") {
       const prev = this.scroll;
       this.scroll += (this.scrollTarget - this.scroll) * Math.min(1, dt * 10);
@@ -288,9 +330,14 @@ export class NotesEngine {
     } else if (mode === "timeline") {
       const prevT = this.t;
       this.t += (this.tTarget - this.t) * Math.min(1, dt * 7);
-      const vel = Math.abs(this.t - prevT) / Math.max(dt, 0.001);
-      this.tension += (Math.min(1, vel / 6) - this.tension) * Math.min(1, dt * 5);
-      const tl = timelineTargets(this.drawings, this.vp, this.t);
+      const tVel = (this.t - prevT) / Math.max(dt, 0.001);
+      // rope tension is a spring so it bounces after a scroll stops
+      const tensionGoal = Math.min(1, Math.abs(tVel) / 4);
+      this.tensionVel += ((tensionGoal - this.tension) * 26 - this.tensionVel * 6) * dt;
+      this.tension = Math.max(-0.05, Math.min(1.15, this.tension + this.tensionVel * dt));
+      // pendulum swing from scroll inertia; the per-note r spring adds the wobble
+      this.swing = Math.max(-16, Math.min(16, tVel * 5));
+      const tl = timelineTargets(this.drawings, this.vp, this.t, this.swing);
       tl.targets.forEach((tt, i) => {
         const note = this.notes[i];
         note.tx = tt.x; note.ty = tt.y; note.tr = tt.r; note.ts = tt.s;
@@ -310,7 +357,6 @@ export class NotesEngine {
     const sweeping = this.pointer.sweeping && (Math.abs(sweepDx) + Math.abs(sweepDy) > 0.5);
 
     let allSettled = true;
-    let bestHover: { i: number; d: number } | null = null;
 
     for (let i = 0; i < this.notes.length; i++) {
       const n = this.notes[i];
@@ -330,10 +376,12 @@ export class NotesEngine {
         n.vy += (gy - n.y) * 900 * dt - n.vy * Math.min(1, dt * 34);
         n.x += n.vx * dt;
         n.y += n.vy * dt;
-        n.r += (0 - n.r) * Math.min(1, dt * 6);
-        n.s += (n.ts * 1.06 - n.s) * Math.min(1, dt * 12);
+        // paper trails behind the hand a little while dragged
+        const trail = Math.max(-13, Math.min(13, -n.vx * 0.013));
+        n.r += (trail - n.r) * Math.min(1, dt * 8);
+        // holding brings the note up close for a proper look
+        n.s += (2.35 - n.s) * Math.min(1, dt * 5.5);
         n.hoverAmt = 1;
-        allSettled = false;
         continue;
       }
 
@@ -342,20 +390,20 @@ export class NotesEngine {
         const fr = Math.exp(-dt * 3.2);
         n.vx *= fr; n.vy *= fr; n.vr *= fr;
 
-        // hover proximity breeze
+        // hover proximity breeze — tight radius, steep falloff, so the
+        // disturbance stays local to the cursor
         if (!p.down) {
           const dx = n.x - p.x;
           const dy = n.y - p.y;
           const d = Math.hypot(dx, dy);
-          const R = size * 1.5;
+          const R = size * 1.0;
           if (d < R && d > 0.001) {
-            const a = (1 - d / R) ** 2 * 460 * dt;
+            const a = (1 - d / R) ** 3 * 340 * dt;
             n.vx += (dx / d) * a;
             n.vy += (dy / d) * a;
-            n.vr += (dx / d) * a * 0.25;
+            n.vr += (dx / d) * a * 0.22;
             n.hoverAmt = Math.min(1, n.hoverAmt + (1 - d / R) * dt * 8);
           }
-          if (d < size * 0.55 && (!bestHover || d < bestHover.d)) bestHover = { i, d };
         }
 
         // sweep push: notes pick up a fraction of the pointer's velocity
@@ -379,13 +427,14 @@ export class NotesEngine {
         n.y += n.vy * dt;
         n.r += n.vr * dt;
 
-        // soft bounds
+        // soft bounds (the desk extends below the viewport when scrollable)
         const m = size * 0.45;
         const topSafe = 80;
+        const deskH = Math.max(this.scatterH, this.vp.h);
         if (n.x < m) { n.x = m; n.vx = Math.abs(n.vx) * 0.45; }
         if (n.x > this.vp.w - m) { n.x = this.vp.w - m; n.vx = -Math.abs(n.vx) * 0.45; }
         if (n.y < topSafe + m * 0.4) { n.y = topSafe + m * 0.4; n.vy = Math.abs(n.vy) * 0.45; }
-        if (n.y > this.vp.h - m) { n.y = this.vp.h - m; n.vy = -Math.abs(n.vy) * 0.45; }
+        if (n.y > deskH - m) { n.y = deskH - m; n.vy = -Math.abs(n.vy) * 0.45; }
 
         // gentle scale relax
         n.s += (1 + n.hoverAmt * 0.04 - n.s) * Math.min(1, dt * 10);
@@ -407,14 +456,17 @@ export class NotesEngine {
       }
     }
 
-    // pairwise separation while things are moving in scatter
+    // pairwise separation while things are moving in scatter. The push is
+    // scaled by the mover's speed with a real threshold — paper has high
+    // friction, so a nudge shouldn't ripple across the whole desk.
     if (scatterPhysics) {
       const minD = size * 0.72;
       for (let i = 0; i < this.notes.length; i++) {
         const a = this.notes[i];
         if (a.hidden) continue;
-        const moving = Math.abs(a.vx) + Math.abs(a.vy) > 0.12;
-        if (!moving && this.dragIndex !== i) continue;
+        const sp = Math.hypot(a.vx, a.vy);
+        if (sp < 30 && this.dragIndex !== i) continue;
+        const strength = this.dragIndex === i ? 1 : Math.min(1, sp / 260);
         for (let j = 0; j < this.notes.length; j++) {
           if (i === j) continue;
           const b = this.notes[j];
@@ -422,15 +474,45 @@ export class NotesEngine {
           const dx = b.x - a.x, dy = b.y - a.y;
           const d = Math.hypot(dx, dy);
           if (d < minD && d > 0.001) {
-            const push = ((minD - d) / minD) * 520 * dt;
+            const push = ((minD - d) / minD) * 520 * strength * dt;
             b.vx += (dx / d) * push;
             b.vy += (dy / d) * push;
           }
         }
       }
-      this.setHover(p.down ? null : bestHover ? bestHover.i : null);
     }
 
+    // grid corner-tilt: hit-test the topmost note under the pointer
+    if (mode === "grid" && !p.down) {
+      let best: { i: number; z: number } | null = null;
+      for (let i = 0; i < this.notes.length; i++) {
+        const n = this.notes[i];
+        if (n.hidden) continue;
+        const half = (size * n.s) / 2;
+        if (
+          Math.abs(p.x - n.x) < half &&
+          Math.abs(p.y - (n.y - this.scroll)) < half &&
+          (!best || n.z > best.z)
+        ) {
+          best = { i, z: n.z };
+        }
+      }
+      if (best) {
+        const n = this.notes[best.i];
+        const half = (size * n.s) / 2;
+        this.gridTiltI = best.i;
+        this.gridTiltX = ((p.x - n.x) / half) * 7; // deg for rotateY
+        this.gridTiltY = (-(p.y - (n.y - this.scroll)) / half) * 7; // deg for rotateX
+      } else {
+        this.gridTiltI = -1;
+      }
+    } else {
+      this.gridTiltI = -1;
+    }
+
+    // `settled` latches on: once scatter hands over to free physics it stays
+    // there (dragging one note must never freeze the rest back into springs).
+    // Only a mode change (applyMode with stagger) resets it.
     if (!scatterPhysics && allSettled && !this.settled) {
       this.settled = true;
       if (this.mode === "scatter") {
@@ -438,7 +520,6 @@ export class NotesEngine {
         this.notes.forEach((n) => { n.vx = 0; n.vy = 0; n.vr = 0; });
       }
     }
-    if (!allSettled) this.settled = false;
 
     p.px = p.x;
     p.py = p.y;
@@ -447,7 +528,22 @@ export class NotesEngine {
   private render() {
     const size = this.noteSize;
     const half = size / 2;
-    const scrollOff = this.mode === "grid" ? this.scroll : 0;
+    const scrollOff =
+      this.mode === "grid" ? this.scroll
+      : this.mode === "scatter" ? this.scatterScroll
+      : 0;
+
+    // anchor the hold-to-inspect metadata beside the held note
+    if (this.mode === "scatter" && this.dragIndex != null && this.cb.onHoldPos) {
+      const n = this.notes[this.dragIndex];
+      const halfHeld = (size * n.s) / 2;
+      const flip = n.x > this.vp.w * 0.62;
+      this.cb.onHoldPos(
+        flip ? n.x - halfHeld - 22 : n.x + halfHeld + 22,
+        n.y - this.scatterScroll,
+        flip
+      );
+    }
     for (let i = 0; i < this.notes.length; i++) {
       const n = this.notes[i];
       const el = n.el;
@@ -460,16 +556,31 @@ export class NotesEngine {
       let x = n.x - half;
       let y = n.y - half - scrollOff;
       let r = n.r;
-      // continuous peel transform on the stack's top note
-      if (this.mode === "stack" && i === this.stackTopIndex && this.peelAccum > 0) {
-        const pr = this.peelAccum / PEEL_DIST;
-        x -= pr * pr * this.vp.w * 0.2;
-        y -= pr * pr * this.vp.h * 0.38;
-        r -= pr * 20;
-        el.style.setProperty("--peel", pr.toFixed(3));
-        n.wx = Infinity; // force write while peeling
-      } else if (this.mode === "stack" && el.style.getPropertyValue("--peel") !== "" && el.style.getPropertyValue("--peel") !== "0") {
-        el.style.setProperty("--peel", "0");
+      if (this.mode === "stack") {
+        const top = this.stackTopIndex;
+        if (i >= top && i <= top + 3) {
+          // curl amount: manual peel progress on the top note, or distance
+          // from rest for a note flying to / returning from the floor pile.
+          // The actual bend is a rotateX on .note-paper driven by --peel.
+          const dist = Math.hypot(n.tx - n.x, n.ty - n.y);
+          let pr = Math.min(1, dist / (this.vp.h * 0.5));
+          if (i === top && this.peelAccum > 0) {
+            const manual = this.peelAccum / PEEL_DIST;
+            pr = Math.max(pr, manual);
+            // the grabbed edge rises a little as it peels
+            y -= manual * size * 0.45;
+            r += manual * (hash(this.drawings[i].id + ":pl") - 0.5) * 10;
+          }
+          if (pr > 0.002) {
+            el.style.setProperty("--peel", pr.toFixed(3));
+            n.wx = Infinity; // force transform write while curling
+          } else if (
+            el.style.getPropertyValue("--peel") !== "0" &&
+            el.style.getPropertyValue("--peel") !== ""
+          ) {
+            el.style.setProperty("--peel", "0");
+          }
+        }
       }
       if (
         Math.abs(x - n.wx) > 0.05 || Math.abs(y - n.wy) > 0.05 ||
@@ -484,10 +595,25 @@ export class NotesEngine {
         n.wz = z;
       }
       const state =
-        this.dragIndex === i ? "drag" : n.hoverAmt > 0.35 ? "hover" : "rest";
+        this.dragIndex === i
+          ? "drag"
+          : (this.mode === "grid" && i === this.gridTiltI) || n.hoverAmt > 0.35
+            ? "hover"
+            : "rest";
       if (state !== n.wState) {
         el.dataset.state = state;
         n.wState = state;
+      }
+      // 3D corner tilt on the hovered grid note
+      if (this.mode === "grid" && i === this.gridTiltI) {
+        el.style.setProperty("--tx", this.gridTiltX.toFixed(2));
+        el.style.setProperty("--ty", this.gridTiltY.toFixed(2));
+      } else {
+        const tx = el.style.getPropertyValue("--tx");
+        if (tx !== "" && tx !== "0") {
+          el.style.setProperty("--tx", "0");
+          el.style.setProperty("--ty", "0");
+        }
       }
     }
   }

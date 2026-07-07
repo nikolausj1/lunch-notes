@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LunchDrawing, ViewMode } from "@/lib/types";
 import { formatLong } from "@/lib/dates";
@@ -47,31 +48,42 @@ export function MetadataPanel({
   );
 }
 
-/** Small tooltip near the hovered note in Scatter mode (PRD §10.7). */
-export function ScatterTooltip({
-  drawing,
-  pos,
-}: {
-  drawing: LunchDrawing | null;
-  pos: { x: number; y: number } | null;
-}) {
+/**
+ * Metadata shown while a note is held up close in Scatter mode.
+ * The wrapper is positioned imperatively every frame by the engine
+ * (onHoldPos) so it rides along with the held note.
+ */
+export const HoldMetadata = forwardRef<
+  HTMLDivElement,
+  { drawing: LunchDrawing | null }
+>(function HoldMetadata({ drawing }, ref) {
   return (
-    <AnimatePresence>
-      {drawing && pos && (
-        <motion.div
-          key={drawing.id}
-          className="scatter-tip"
-          style={{ left: pos.x, top: pos.y }}
-          initial={{ opacity: 0, y: 6, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 4, scale: 0.96 }}
-          transition={{ duration: 0.16 }}
-        >
-          <span className="tip-date">{formatLong(drawing.date)}</span>
-          {drawing.title && <span className="tip-title">{drawing.title}</span>}
-          {drawing.child && <span className="tip-child">by {drawing.child}</span>}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="scatter-tip" ref={ref}>
+      <AnimatePresence>
+        {drawing && (
+          <motion.div
+            key={drawing.id}
+            className="meta-card"
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ duration: 0.18, delay: drawing ? 0.12 : 0 }}
+          >
+            <div className="meta-date">{formatLong(drawing.date)}</div>
+            {drawing.title && <div className="meta-title">{drawing.title}</div>}
+            <div className="meta-row">
+              {drawing.child && (
+                <span className={`meta-child child-bg-${drawing.child.toLowerCase()}`}>
+                  {drawing.child}
+                </span>
+              )}
+              {drawing.tags?.map((t) => (
+                <span key={t} className="meta-tag">{t}</span>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
-}
+});
