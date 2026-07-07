@@ -112,6 +112,21 @@ export class NotesEngine {
     this.applyMode(this.mode, true);
   }
 
+  /**
+   * Called when the tab regains focus after being hidden: rAF was paused,
+   * so half-finished transitions would resume as one big unnatural glide.
+   * Instead, finish them instantly — the time "passed" while away.
+   */
+  finishTransitions() {
+    if (this.mode === "scatter" && this.settled) return;
+    this.notes.forEach((n) => {
+      n.delay = 0;
+      n.x = n.tx; n.y = n.ty; n.r = n.tr; n.s = n.ts;
+      n.vx = 0; n.vy = 0; n.vr = 0;
+    });
+    this.settled = true;
+  }
+
   setViewport(vp: Viewport, first = false) {
     this.vp = vp;
     this.root?.style.setProperty("--note-size", `${this.noteSize}px`);
@@ -466,7 +481,15 @@ export class NotesEngine {
 
     for (let i = 0; i < this.notes.length; i++) {
       const n = this.notes[i];
-      if (n.hidden) continue;
+      if (n.hidden) {
+        // teleport while invisible: when this note is revealed later (e.g.
+        // rising through the stack as notes peel off), it must already be
+        // resting in place — never seen flying in from across the desk
+        n.x = n.tx; n.y = n.ty; n.r = n.tr; n.s = n.ts;
+        n.vx = 0; n.vy = 0; n.vr = 0;
+        n.delay = 0;
+        continue;
+      }
 
       if (n.delay > 0) {
         n.delay -= dt * 1000;

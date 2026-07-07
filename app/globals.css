@@ -167,11 +167,36 @@ body {
    corner. Runs in reverse when a note is pressed back on. */
 .viewer[data-mode="stack"] .note-paper {
   transform-origin: 50% 2%;
-  transform: perspective(950px) rotateX(calc(var(--peel, 0) * 74deg))
+  transform: perspective(950px) rotateX(calc(var(--peel, 0) * 38deg))
     rotateZ(calc(var(--peelZ, 0) * 1deg));
-  border-bottom-left-radius: calc(var(--peel, 0) * 34%);
-  border-bottom-right-radius: calc(var(--peel, 0) * 34%);
+  border-bottom-left-radius: calc(var(--peel, 0) * 30%);
+  border-bottom-right-radius: calc(var(--peel, 0) * 30%);
   transition: box-shadow 0.25s ease;
+}
+
+/* the bottom of the note curls over, showing the paper's underside */
+.note-underside {
+  position: absolute;
+  left: -1%;
+  right: -1%;
+  bottom: -1%;
+  height: calc(var(--peel, 0) * 56%);
+  opacity: clamp(0, calc(var(--peel, 0) * 7), 1);
+  background: linear-gradient(
+    to top,
+    #fdf8cd 0%,
+    #f3eaad 55%,
+    #d9cd85 96%,
+    #b8ab61 100%
+  );
+  border-radius: 46% 46% 4px 4px / calc(var(--peel, 0) * 30%) calc(var(--peel, 0) * 30%) 4px 4px;
+  box-shadow: 0 -3px 9px rgba(80, 65, 40, calc(var(--peel, 0) * 0.4));
+  pointer-events: none;
+  display: none;
+}
+
+.viewer[data-mode="stack"] .note-underside {
+  display: block;
 }
 
 /* timeline: notes pivot from where they're taped to the rope; --fb is the
@@ -343,7 +368,7 @@ body {
 .meta-panel-stack {
   /* hugs the right edge of the stack (stack note is ~2.6x base size) */
   left: calc(50% + clamp(160px, 24vw, 320px));
-  top: 50%;
+  top: 58%;
   transform: translateY(-50%);
 }
 

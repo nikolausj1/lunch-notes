@@ -72,7 +72,8 @@ export function Viewer() {
           if (!el) return;
           const a = byI.get(m.i);
           if (a) {
-            el.style.transform = `translate(${a.x - 40}px, ${a.y - 34}px)`;
+            // month labels sit to the left of the near-vertical rope
+            el.style.transform = `translate(${a.x - 130}px, ${a.y - 12}px)`;
             el.style.opacity = "1";
           } else {
             el.style.opacity = "0";
@@ -85,6 +86,9 @@ export function Viewer() {
       (window as unknown as { __eng?: NotesEngine }).__eng = eng;
     }
     eng.setRoot(surfaceRef.current);
+    // if the engine is recreated mid-session (fast refresh, strict mode),
+    // adopt the mode the UI is already showing instead of resetting
+    if (mode !== "scatter") eng.setMode(mode);
     // NoteCard ref callbacks fired before the engine existed — attach now
     surfaceRef.current
       ?.querySelectorAll<HTMLDivElement>("[data-note-i]")
@@ -135,6 +139,18 @@ export function Viewer() {
     };
     surface?.addEventListener("wheel", onWheel, { passive: false });
 
+    // when the tab was hidden, rAF was paused mid-transition; finish those
+    // moves instantly on return instead of resuming as one big group glide
+    let hiddenAt = 0;
+    const onVis = () => {
+      if (document.hidden) {
+        hiddenAt = performance.now();
+      } else if (performance.now() - hiddenAt > 1200) {
+        eng.finishTransitions();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+
     const onKey = (e: KeyboardEvent) => {
       const fwd = e.key === "ArrowDown" || e.key === "ArrowRight";
       const back = e.key === "ArrowUp" || e.key === "ArrowLeft";
@@ -149,6 +165,7 @@ export function Viewer() {
       cancelled = true;
       eng.stop();
       ro.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("keydown", onKey);
       surface?.removeEventListener("wheel", onWheel);
     };

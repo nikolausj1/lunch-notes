@@ -135,7 +135,7 @@ export function stackTargets(
   const n = drawings.length;
   const size = baseNoteSize(vp);
   const cx = vp.w / 2;
-  const cy = vp.h / 2 - vp.h * 0.02;
+  const cy = vp.h * 0.58; // sits low so the torn-off pile has room above
 
   return drawings.map((d, i) => {
     const depth = n - 1 - i - peeled; // 0 = current top, negative = peeled away
@@ -177,12 +177,16 @@ export type TimelineInfo = {
   anchors: { x: number; y: number; i: number }[];
 };
 
-/** The rope runs from over the viewer's left shoulder into the distance. */
+/**
+ * The rope runs from behind the viewer nearly straight into the background —
+ * only a small angle, so receding notes overlap. The focused note hangs
+ * front and center.
+ */
 export function timelineGeometry(vp: Viewport) {
   return {
-    shoulder: { x: -vp.w * 0.06, y: vp.h * 1.04 },
-    focus: { x: vp.w * 0.34, y: vp.h * 0.4 },
-    van: { x: vp.w * 0.86, y: vp.h * 0.22 }, // vanishing point
+    shoulder: { x: vp.w * 0.24, y: vp.h * 1.18 },
+    focus: { x: vp.w * 0.47, y: vp.h * 0.38 },
+    van: { x: vp.w * 0.64, y: vp.h * 0.16 }, // vanishing point
   };
 }
 
@@ -206,18 +210,20 @@ export function timelineTargets(
 
   const targets = drawings.map((d, i) => {
     const u = t - i; // 0 = focused; + = older, into the distance; - = passed by
-    const p = Math.pow(0.74, u); // perspective factor: 1 at focus, ->0 far away
-    if (p < 0.055 || u < -1.9) {
+    // perspective factor: 1 at focus, ->0 far away. Passing notes (u < 0)
+    // blow up much faster — they rush right over the camera lens.
+    const p = u < 0 ? Math.pow(0.74, u * 2.3) : Math.pow(0.74, u);
+    if (p < 0.055 || u < -2.1) {
       return { x: van.x, y: van.y, r: 0, s: 0.1, z: 0, hidden: true };
     }
     const ax = van.x + (focus.x - van.x) * p;
     const ay = van.y + (focus.y - van.y) * p;
-    const s = Math.min(4.4, 2.1 * p);
+    const s = Math.min(7, 2.1 * p);
     // depth of field: too-close notes are very soft, far ones gently soft
     const blur =
-      u < 0 ? Math.min(16, -u * 9) : Math.max(0, Math.min(9, (u - 2.4) * 1.5));
-    const opacity = u < -0.45 ? Math.max(0, 1 - (-u - 0.45) / 1.15) : 1;
-    if (p > 0.2 && u > -1.2) anchors.push({ x: ax, y: ay, i });
+      u < 0 ? Math.min(20, -u * 11) : Math.max(0, Math.min(9, (u - 2.4) * 1.5));
+    const opacity = u < -0.6 ? Math.max(0, 1 - (-u - 0.6) / 1.1) : 1;
+    if (p > 0.18 && u > -1.2) anchors.push({ x: ax, y: ay, i });
     const sway = (hash(d.id + ":tw") - 0.5) * 5;
     return {
       x: ax,

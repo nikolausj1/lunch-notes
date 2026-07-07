@@ -46,8 +46,13 @@ export function threadPath(
     const a = pts[i - 1];
     const b = pts[i];
     const segLen = Math.hypot(b.x - a.x, b.y - a.y);
+    if (segLen < 0.01) continue;
+    // sag hangs perpendicular to the (near-vertical) rope segment
     const sag = segLen * slack;
-    d += ` Q ${(a.x + b.x) / 2} ${(a.y + b.y) / 2 + sag} ${b.x} ${b.y}`;
+    const nx = -(b.y - a.y) / segLen;
+    const ny = (b.x - a.x) / segLen;
+    const sign = ny >= 0 ? 1 : -1;
+    d += ` Q ${(a.x + b.x) / 2 + nx * sag * sign} ${(a.y + b.y) / 2 + ny * sag * sign} ${b.x} ${b.y}`;
   }
   return d;
 }

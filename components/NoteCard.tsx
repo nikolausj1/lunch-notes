@@ -37,6 +37,7 @@ function NoteCardInner({ drawing, index, featured, attach }: Props) {
           />
         )}
         <span className="note-curl" aria-hidden />
+        <span className="note-underside" aria-hidden />
       </div>
       <span className="note-tape" aria-hidden />
       <div className="note-label">
