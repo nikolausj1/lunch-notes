@@ -77,4 +77,4 @@ export function getDrawings(total = 120): LunchDrawing[] {
   return all.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id.localeCompare(b.id)));
 }
 
-export const SITE_TITLE = "Lunch Notes";
+export const SITE_TITLE = "Lunch Box Drawings";

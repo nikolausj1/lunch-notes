@@ -13,9 +13,9 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Lunch Notes",
+  title: "Lunch Box Drawings",
   description:
-    "Daily Post-it drawings made for the kids' lunchboxes — an interactive desk of little paper artifacts.",
+    "Daily Post-it drawings made for my sons' lunches — an interactive desk of little paper artifacts.",
 };
 
 export const viewport: Viewport = {

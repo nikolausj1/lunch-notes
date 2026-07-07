@@ -508,8 +508,8 @@ export class NotesEngine {
         // paper trails behind the hand a little while dragged
         const trail = Math.max(-13, Math.min(13, -n.vx * 0.013));
         n.r += (trail - n.r) * Math.min(1, dt * 8);
-        // holding brings the note up close for a proper look
-        n.s += (2.35 - n.s) * Math.min(1, dt * 5.5);
+        // holding brings the note right up close for a proper look
+        n.s += (3.2 - n.s) * Math.min(1, dt * 5.5);
         n.hoverAmt = 1;
         continue;
       }

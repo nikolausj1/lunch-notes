@@ -246,7 +246,7 @@ export function Viewer() {
       }}
       onPointerLeave={() => engineRef.current?.pointerLeft()}
     >
-      <DeskSurface />
+      <DeskSurface count={drawings.length} />
 
       <div className="thread-months" data-visible={mode === "timeline"} aria-hidden>
         {monthMarks.map((m, k) => (

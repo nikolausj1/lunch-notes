@@ -39,11 +39,11 @@ export function scatterTargets(
   const n = drawings.length;
 
   // Organic distribution: jittered poisson-ish placement on a shuffled
-  // grid so notes overlap generously and the table reads as covered.
-  const cols = Math.max(3, Math.floor(w / (size * 0.92)));
+  // grid, packed tight so the table reads as fully covered in paper.
+  const cols = Math.max(4, Math.floor(w / (size * 0.68)));
   const rows = Math.ceil(n / cols);
   const cellW = w / cols;
-  const cellH = size * 0.86;
+  const cellH = size * 0.62;
   const height = Math.max(vp.h, topSafe + rows * cellH + margin * 1.5);
   const h = height - margin - topSafe;
   const cellH2 = h / rows;
@@ -185,8 +185,8 @@ export type TimelineInfo = {
 export function timelineGeometry(vp: Viewport) {
   return {
     focus: { x: vp.w * 0.5, y: vp.h * 0.4 },
-    van: { x: vp.w * 0.555, y: vp.h * 0.27 }, // vanishing point
-    exit: { x: vp.w * 0.12, y: -vp.h * 0.34 }, // top-left, over the camera
+    van: { x: vp.w * 0.385, y: vp.h * 0.24 }, // recedes left of center
+    exit: { x: vp.w * 0.14, y: -vp.h * 0.34 }, // top-left, over the camera
   };
 }
 
@@ -223,7 +223,8 @@ export function timelineTargets(
         y: cy0 + (exit.y - cy0) * k,
         r: (hash(d.id + ":tw") - 0.5) * 12 * k,
         s: Math.min(9, 2.1 * p),
-        blur: Math.min(22, -u * 12),
+        // stays sharp until it's genuinely on top of the camera
+        blur: Math.min(22, Math.max(0, (-u - 0.35) * 18)),
         opacity: u < -0.9 ? Math.max(0, 1 - (-u - 0.9) / 1.0) : 1,
         z: Math.round(2000 * p),
       };
@@ -238,6 +239,11 @@ export function timelineTargets(
     const ay = van.y + (focus.y - van.y) * p;
     const s = Math.min(7, 2.1 * p);
     const blur = Math.max(0, Math.min(9, (u - 2.4) * 1.5));
+    // the tail of the line fades away so it never buries the focused note
+    const farFade = u > 3.2 ? Math.max(0, 1 - (u - 3.2) / 2.2) : 1;
+    if (farFade <= 0.02) {
+      return { x: van.x, y: van.y, r: 0, s: 0.1, z: 0, hidden: true };
+    }
     if (p > 0.18) anchors.push({ x: ax, y: ay, i });
     const sway = (hash(d.id + ":tw") - 0.5) * 5;
     return {
@@ -247,7 +253,7 @@ export function timelineTargets(
       s,
       z: Math.round(2000 * p),
       blur,
-      opacity: 1,
+      opacity: farFade,
     };
   });
 
