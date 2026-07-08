@@ -185,7 +185,7 @@ export type TimelineInfo = {
 export function timelineGeometry(vp: Viewport) {
   return {
     focus: { x: vp.w * 0.5, y: vp.h * 0.4 },
-    van: { x: vp.w * 0.385, y: vp.h * 0.24 }, // recedes left of center
+    van: { x: vp.w * 0.62, y: vp.h * 0.24 }, // recedes right of center
     exit: { x: vp.w * 0.14, y: -vp.h * 0.34 }, // top-left, over the camera
   };
 }
@@ -224,7 +224,7 @@ export function timelineTargets(
         r: (hash(d.id + ":tw") - 0.5) * 12 * k,
         s: Math.min(9, 2.1 * p),
         // stays sharp until it's genuinely on top of the camera
-        blur: Math.min(22, Math.max(0, (-u - 0.35) * 18)),
+        blur: Math.min(22, Math.max(0, (-u - 0.65) * 20)),
         opacity: u < -0.9 ? Math.max(0, 1 - (-u - 0.9) / 1.0) : 1,
         z: Math.round(2000 * p),
       };
@@ -238,7 +238,7 @@ export function timelineTargets(
     const ax = van.x + (focus.x - van.x) * p + jx;
     const ay = van.y + (focus.y - van.y) * p;
     const s = Math.min(7, 2.1 * p);
-    const blur = Math.max(0, Math.min(9, (u - 2.4) * 1.5));
+    const blur = Math.max(0, Math.min(9, (u - 3.0) * 1.6));
     // the tail of the line fades away so it never buries the focused note
     const farFade = u > 3.2 ? Math.max(0, 1 - (u - 3.2) / 2.2) : 1;
     if (farFade <= 0.02) {
