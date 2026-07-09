@@ -185,7 +185,7 @@ export type TimelineInfo = {
 export function timelineGeometry(vp: Viewport) {
   return {
     focus: { x: vp.w * 0.5, y: vp.h * 0.4 },
-    van: { x: vp.w * 0.62, y: vp.h * 0.24 }, // recedes right of center
+    van: { x: vp.w * 0.74, y: vp.h * 0.52 }, // recedes lower-right of center
     exit: { x: vp.w * 0.14, y: -vp.h * 0.34 }, // top-left, over the camera
   };
 }
