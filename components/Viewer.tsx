@@ -22,7 +22,7 @@ function getCount(): number {
 export function Viewer() {
   const [count] = useState(getCount);
   const drawings = useMemo(() => getDrawings(count), [count]);
-  const [mode, setMode] = useState<ViewMode>("scatter");
+  const [mode, setMode] = useState<ViewMode>("wall");
   const [gridCols, setGridCols] = useState(5);
   const [focus, setFocus] = useState<number | null>(null);
   const [held, setHeld] = useState<number | null>(null);
@@ -149,12 +149,22 @@ export function Viewer() {
     document.addEventListener("visibilitychange", onVis);
 
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        // put an opened note back (grid zoom / wall moment)
+        eng.onGridClick(null);
+        eng.onWallClick(null);
+        return;
+      }
       const fwd = e.key === "ArrowDown" || e.key === "ArrowRight";
       const back = e.key === "ArrowUp" || e.key === "ArrowLeft";
       if (!fwd && !back) return;
       if (eng.mode === "stack") eng.onWheel(fwd ? 360 : -60);
       else if (eng.mode === "timeline") eng.onWheel(fwd ? 260 : -260);
       else if (eng.mode === "grid") eng.onWheel(fwd ? 160 : -160);
+      else if (eng.mode === "wall") {
+        if (eng.wallOpen) eng.wallStep(fwd ? 1 : -1);
+        else eng.onWheel(fwd ? 160 : -160);
+      }
     };
     window.addEventListener("keydown", onKey);
 
@@ -187,6 +197,10 @@ export function Viewer() {
       for (let k = focus - 3; k <= focus + 2; k++) {
         if (drawings[k]) s.add(drawings[k].id);
       }
+    }
+    // wall: only the opened moment needs the full-resolution image
+    if (mode === "wall" && focus != null && drawings[focus]) {
+      s.add(drawings[focus].id);
     }
     return s;
   }, [mode, focus, drawings]);
@@ -233,11 +247,12 @@ export function Viewer() {
         if (
           eng &&
           p &&
-          mode === "grid" &&
+          (mode === "grid" || mode === "wall") &&
           performance.now() - p.t < 500 &&
           Math.hypot(e.clientX - p.x, e.clientY - p.y) < 8
         ) {
-          eng.onGridClick(p.idx);
+          if (mode === "grid") eng.onGridClick(p.idx);
+          else eng.onWallClick(p.idx);
         }
       }}
       onPointerCancel={() => {
@@ -310,15 +325,18 @@ export function Viewer() {
         drawing={held != null ? drawings[held] ?? null : null}
       />
 
-      {(mode === "stack" || mode === "timeline" || mode === "scatter") && loaded && (
-        <div className="scroll-hint" key={mode}>
-          {mode === "stack"
-            ? "scroll to peel"
-            : mode === "timeline"
-              ? "scroll to travel in time"
-              : "hold a note to look closer — scroll for more"}
-        </div>
-      )}
+      {(mode === "stack" || mode === "timeline" || mode === "scatter" || mode === "wall") &&
+        loaded && (
+          <div className="scroll-hint" key={mode}>
+            {mode === "stack"
+              ? "scroll to peel"
+              : mode === "timeline"
+                ? "scroll to travel in time"
+                : mode === "wall"
+                  ? "the wall parts around your hand — click to pin, scroll for more"
+                  : "hold a note to look closer — scroll for more"}
+          </div>
+        )}
 
       <LoadingExperience done={loaded} />
     </div>

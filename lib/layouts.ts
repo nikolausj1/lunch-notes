@@ -169,6 +169,94 @@ export function stackTargets(
   });
 }
 
+// ------------------------------------------------------------------ wall
+
+export type WallInfo = { cell: number; ringW: number; rows: number; height: number };
+
+/** Wall layout knobs (values settled with the tuning panel, 2026-08-22) */
+export type WallTuning = {
+  /** photo size as a fraction of the base note size */
+  size: number;
+  /** horizontal air between photos, px */
+  hGap: number;
+  /** vertical air between rows, px */
+  vGap: number;
+};
+
+export const WALL_TUNING_DEFAULT: WallTuning = { size: 0.9, hGap: 9, vGap: 12 };
+
+/**
+ * The wall (Moments-inspired): every note pinned in horizontal rows that
+ * fill the viewport edge to edge. Each row is an infinite ring drifting
+ * slowly sideways — odd rows travel one way, even rows the other — driven
+ * by `drift` (px). Every ring spans the viewport plus one cell of overhang,
+ * so the wrap jump always happens fully offscreen. The engine adds the
+ * cursor "parting" and the focused-moment clearing on top of these targets.
+ */
+export function wallTargets(
+  drawings: LunchDrawing[],
+  vp: Viewport,
+  drift = 0,
+  tune: WallTuning = WALL_TUNING_DEFAULT
+): { targets: NoteTarget[]; info: WallInfo } {
+  const n = Math.max(1, drawings.length);
+  const base = baseNoteSize(vp);
+  // photo size and the air around it are direct, independent knobs; the
+  // wall runs taller than the screen and the user scrolls down it
+  const note = base * tune.size;
+  const cellH = note + tune.vGap;
+  const pitch = note + tune.hGap;
+  const perRow = Math.max(3, Math.round(vp.w / pitch) + 1);
+  const rows = Math.max(2, Math.ceil(n / perRow));
+  // spread notes across rows as evenly as possible (first rows get extras)
+  const baseCount = Math.floor(n / rows);
+  const extra = n % rows;
+  // every ring spans the requested pitch, and never less than the viewport
+  // plus a note, so the wrap jump stays offscreen
+  const ringW = Math.max(perRow * pitch, vp.w + note * 1.2);
+  const overhang = (ringW - vp.w) / 2;
+
+  const targets = drawings.map((d, i) => {
+    const k = n - 1 - i; // newest first, reading order
+    let row: number, inRow: number, count: number;
+    const bigRows = extra * (baseCount + 1);
+    if (k < bigRows) {
+      count = baseCount + 1;
+      row = Math.floor(k / count);
+      inRow = k % count;
+    } else {
+      count = baseCount;
+      row = extra + Math.floor((k - bigRows) / count);
+      inRow = (k - bigRows) % count;
+    }
+    const cellW = ringW / count;
+    const dir = row % 2 === 0 ? 1 : -1;
+    // each row travels at its own speed (source: 0.05–0.23 px/frame)
+    const rowSpeed = 0.25 + 0.75 * hash("wallrow:" + row);
+    const bx = inRow * cellW + cellW / 2 + dir * drift * rowSpeed;
+    const x = ((bx % ringW) + ringW) % ringW - overhang;
+    const jx = (hash(d.id + ":wx") - 0.5) * note * 0.08;
+    const jy = (hash(d.id + ":wy") - 0.5) * note * 0.08;
+    return {
+      x: x + jx,
+      y: row * cellH + cellH / 2 + jy,
+      r: (hash(d.id + ":wr") - 0.5) * 7,
+      s: note / base,
+      z: Math.floor(hash(d.id + ":wz") * n),
+    };
+  });
+
+  return {
+    targets,
+    info: {
+      cell: note,
+      ringW,
+      rows,
+      height: rows * cellH,
+    },
+  };
+}
+
 // -------------------------------------------------------------- timeline
 
 export type TimelineInfo = {

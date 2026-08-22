@@ -7,6 +7,7 @@ import {
   scatterTargets,
   stackTargets,
   timelineTargets,
+  wallTargets,
   TimelineInfo,
 } from "./layouts";
 import { hash } from "./drawings";
@@ -62,6 +63,17 @@ export class NotesEngine {
   stackDrag: { relX: number; startY: number; startAccum: number } | null = null;
   // timeline
   t = 0; tTarget = 0; tension = 0; tensionVel = 0; swing = 0;
+  // wall (matches the Moments source): the note nearest the hand lifts and
+  // rides the cursor inside the parted gap, swapping as the hand moves;
+  // clicking pins it open at center and pauses the row drift
+  wallZoom: number | null = null;
+  wallOpen = false;
+  wallDrift = 0;
+  wallFocusHalf = 0;
+  wallPoint = { x: 0, y: 0 }; // content space (y includes wall scroll)
+  // the wall runs taller than the viewport; scroll down it for more rows
+  wallScroll = 0; wallScrollTarget = 0; wallH = 0;
+  private wallPrevX: number[] = [];
 
   get stackDragging() {
     return this.stackDrag != null;
@@ -152,6 +164,7 @@ export class NotesEngine {
     this.dragIndex = null;
     this.stackDrag = null;
     this.gridZoom = null;
+    this.wallZoom = null;
     this.setHover(null);
     this.notes.forEach((n) => {
       if (!n.el) return;
@@ -170,7 +183,15 @@ export class NotesEngine {
     }
     if (mode === "grid") { this.scroll = this.scrollTarget = 0; }
     if (mode === "scatter") { this.scatterScroll = this.scatterScrollTarget = 0; }
+    if (mode === "wall") {
+      this.wallDrift = 0;
+      this.wallOpen = false;
+      this.wallZoom = this.drawings.length - 1; // until the hand takes over
+      this.wallPrevX = [];
+      this.wallScroll = this.wallScrollTarget = 0;
+    }
     this.applyMode(mode, true);
+    if (mode === "wall") this.setHover(this.wallZoom);
   }
 
   setGridCols(cols: number) {
@@ -205,6 +226,13 @@ export class NotesEngine {
     } else if (mode === "stack") {
       targets = stackTargets(this.drawings, this.vp, this.peeled);
       this.updateFocus(this.stackTopIndex);
+    } else if (mode === "wall") {
+      const wl = wallTargets(this.drawings, this.vp, this.wallDrift);
+      targets = wl.targets;
+      this.wallH = wl.info.height;
+      this.wallScrollTarget = Math.min(this.wallScrollTarget, this.maxWallScroll);
+      if (this.wallZoom == null) this.wallZoom = this.drawings.length - 1;
+      this.updateFocus(this.wallZoom); // per-frame follow logic lives in tick
     } else {
       const tl = timelineTargets(this.drawings, this.vp, this.t);
       targets = tl.targets;
@@ -227,6 +255,10 @@ export class NotesEngine {
 
   get maxScatterScroll() {
     return Math.max(0, this.scatterH - this.vp.h);
+  }
+
+  get maxWallScroll() {
+    return Math.max(0, this.wallH - this.vp.h);
   }
 
   get stackTopIndex() {
@@ -259,6 +291,13 @@ export class NotesEngine {
     } else if (this.mode === "grid") {
       if (this.gridZoom != null) this.onGridClick(null); // scrolling puts it back
       this.scrollTarget = Math.max(0, Math.min(this.maxScroll, this.scrollTarget + dy));
+    } else if (this.mode === "wall") {
+      // scrolling hands a pinned moment back, then travels down the wall
+      if (this.wallOpen) this.wallOpen = false;
+      this.wallScrollTarget = Math.max(
+        0,
+        Math.min(this.maxWallScroll, this.wallScrollTarget + dy)
+      );
     } else if (this.mode === "timeline") {
       // scroll down travels back in time (newest sits at the end)
       const n = this.drawings.length;
@@ -309,6 +348,28 @@ export class NotesEngine {
     this.gridZoom = i == null || i === this.gridZoom ? null : i;
     this.applyMode("grid", false);
     this.setHover(this.gridZoom);
+  }
+
+  /**
+   * wall: clicking pins the moment riding the hand open at center; any
+   * click while one is open (or Escape → null) hands it back to the cursor.
+   */
+  onWallClick(i: number | null) {
+    if (this.mode !== "wall") return;
+    if (this.wallOpen) {
+      this.wallOpen = false;
+      return;
+    }
+    if (i != null) this.wallOpen = true;
+  }
+
+  /** wall: arrow keys step through the moments while one is pinned open */
+  wallStep(dir: number) {
+    if (this.mode !== "wall" || !this.wallOpen || this.wallZoom == null) return;
+    const n = this.drawings.length;
+    this.wallZoom = (this.wallZoom + dir + n) % n;
+    this.updateFocus(this.wallZoom);
+    this.setHover(this.wallZoom);
   }
 
   /** role: index of note pressed, or null for empty surface */
@@ -369,7 +430,11 @@ export class NotesEngine {
       }
       // otherwise the tick relaxes the half-peeled note back down
     }
-    this.setHover(this.mode === "grid" ? this.gridZoom : null);
+    this.setHover(
+      this.mode === "grid" ? this.gridZoom
+      : this.mode === "wall" ? this.wallZoom
+      : null
+    );
     this.pointer.down = false;
     this.pointer.sweeping = false;
     if (this.dragIndex != null) {
@@ -383,7 +448,8 @@ export class NotesEngine {
   pointerLeft() {
     this.pointer.x = this.pointer.px = -9999;
     this.pointer.y = this.pointer.py = -9999;
-    this.setHover(null);
+    // wall: the featured moment glides back to center and keeps its label
+    this.setHover(this.mode === "wall" ? this.wallZoom : null);
   }
 
   // -------------------------------------------------------------- loop
@@ -460,6 +526,79 @@ export class NotesEngine {
       });
       this.updateFocus(tl.info.focusIndex);
       this.cb.onThread?.(tl.info.anchors, this.tension, this.vp);
+    }
+
+    // wall: the rows drift sideways forever (pausing while a moment is
+    // pinned open); retarget every note each frame
+    if (mode === "wall") {
+      if (!this.wallOpen) this.wallDrift += dt * 16;
+      this.wallScroll +=
+        (this.wallScrollTarget - this.wallScroll) * Math.min(1, dt * 10);
+      const wl = wallTargets(this.drawings, this.vp, this.wallDrift);
+      this.wallH = wl.info.height;
+      const halfRing = wl.info.ringW / 2;
+      const firstPass = this.wallPrevX.length !== wl.targets.length;
+      wl.targets.forEach((tt, i) => {
+        const note = this.notes[i];
+        const prevX = firstPass ? tt.x : this.wallPrevX[i];
+        this.wallPrevX[i] = tt.x;
+        if (i === this.wallZoom) return; // riding the hand, not the ring
+        // ring wrap: the target teleported a full ring width offscreen —
+        // carry the note across with it so the spring never drags it back
+        if (Math.abs(tt.x - prevX) > halfRing) {
+          note.x += tt.x - prevX;
+        }
+        note.tx = tt.x; note.ty = tt.y; note.tr = tt.r; note.ts = tt.s;
+        note.z = tt.z;
+      });
+
+      // the gap (and the featured moment) live at the hand — or rest at
+      // center when no pointer has arrived yet / the mouse has left.
+      // Note targets are in wall (content) space, so the pointer converts
+      // by the current scroll.
+      const size0 = this.noteSize;
+      const pt = this.pointer;
+      const fx = pt.x < -9000 ? this.vp.w / 2 : pt.x;
+      const fy =
+        (pt.y < -9000 ? this.vp.h / 2 : pt.y) + this.wallScroll;
+      this.wallPoint.x = fx;
+      this.wallPoint.y = fy;
+
+      // focus follows the pointer (source: nearest cell within 0.9× the
+      // gap radius becomes the featured photo, never while pinned open)
+      if (!this.wallOpen) {
+        let best = -1;
+        let bestD = Infinity;
+        for (let i = 0; i < wl.targets.length; i++) {
+          const d = Math.hypot(wl.targets[i].x - fx, wl.targets[i].y - fy);
+          if (d < bestD) { bestD = d; best = i; }
+        }
+        if (best >= 0 && best !== this.wallZoom && bestD < size0 * 2.0) {
+          this.wallZoom = best;
+          this.updateFocus(best);
+          this.setHover(best);
+        }
+      }
+
+      // the featured note's target: on the hand, or pinned at center
+      const zi = this.wallZoom;
+      if (zi != null && this.notes[zi]) {
+        const big = Math.min((this.vp.h * 0.52) / size0, (this.vp.w * 0.4) / size0);
+        this.wallFocusHalf = (big * size0) / 2;
+        const nz = this.notes[zi];
+        if (this.wallOpen) {
+          nz.tx = this.vp.w / 2;
+          nz.ty = this.vp.h * 0.45 + this.wallScroll;
+          nz.tr = 0;
+          nz.ts = big;
+        } else {
+          nz.tx = fx;
+          nz.ty = fy;
+          nz.tr = 0;
+          nz.ts = Math.min(2.3, big * 0.72);
+        }
+        nz.z = 9000;
+      }
     }
 
     const scatterPhysics = mode === "scatter" && this.settled;
@@ -572,18 +711,64 @@ export class NotesEngine {
         // gentle scale relax
         n.s += (1 + n.hoverAmt * 0.04 - n.s) * Math.min(1, dt * 10);
       } else {
-        // spring toward target
+        // the wall parts wherever the cursor goes: rest targets stay fixed,
+        // and a radial displacement field pushes nearby notes aside. The
+        // springs chase the displaced target, so the gap opens and closes
+        // organically as the hand moves.
+        let tx = n.tx, ty = n.ty, tr = n.tr, ts = n.ts;
+        if (mode === "wall" && i !== this.wallZoom) {
+          // the wall parts around the hand. Field shape matches the Moments
+          // source: gap radius l, reach 1.3·l, push l·(1−d/c)², plus a rim
+          // of slightly-raised notes around the opening.
+          const l = size * 2.2;
+          const c = l * 1.3;
+          const dx = n.tx - this.wallPoint.x;
+          const dy = n.ty - this.wallPoint.y;
+          const d = Math.hypot(dx, dy);
+          if (d < c) {
+            const f = (1 - d / c) ** 2;
+            const ux = d > 0.001 ? dx / d : 1;
+            const uy = d > 0.001 ? dy / d : 0;
+            tx += ux * l * f;
+            ty += uy * l * f;
+            tr += ux * f * 11; // notes lean away as they slide aside
+            // the parting lifts nearby notes slightly (deeper shadow)
+            n.hoverAmt = Math.min(1, Math.max(n.hoverAmt, f * 0.9));
+          }
+          if (d > l * 0.55 && d < l * 1.05) {
+            ts *=
+              1 +
+              0.06 *
+                smoothstep(l * 0.55, l * 0.8, d) *
+                (1 - smoothstep(l * 0.85, l * 1.05, d));
+          }
+          // while a moment is pinned open the rows also keep clear of it
+          if (this.wallOpen) {
+            const dx2 = n.tx - this.vp.w / 2;
+            const dy2 = n.ty - (this.vp.h * 0.45 + this.wallScroll);
+            const d2 = Math.hypot(dx2, dy2);
+            const R2 = this.wallFocusHalf + size * 0.8;
+            if (d2 < R2) {
+              const f2 = (1 - d2 / R2) ** 1.5;
+              const ux2 = d2 > 0.001 ? dx2 / d2 : 1;
+              const uy2 = d2 > 0.001 ? dy2 / d2 : 0;
+              tx += ux2 * f2 * size * 1.5;
+              ty += uy2 * f2 * size * 1.5;
+            }
+          }
+        }
+        // spring toward (possibly displaced) target
         const st = 170, dp = 20;
-        n.vx += (n.tx - n.x) * st * dt - n.vx * dp * dt;
-        n.vy += (n.ty - n.y) * st * dt - n.vy * dp * dt;
-        n.vr += (n.tr - n.r) * st * dt - n.vr * dp * dt;
+        n.vx += (tx - n.x) * st * dt - n.vx * dp * dt;
+        n.vy += (ty - n.y) * st * dt - n.vy * dp * dt;
+        n.vr += (tr - n.r) * st * dt - n.vr * dp * dt;
         n.x += n.vx * dt;
         n.y += n.vy * dt;
         n.r += n.vr * dt;
-        n.s += (n.ts - n.s) * Math.min(1, dt * 9);
+        n.s += (ts - n.s) * Math.min(1, dt * 9);
         n.hoverAmt = Math.max(0, n.hoverAmt - dt * 3);
         const still =
-          Math.abs(n.tx - n.x) < 0.5 && Math.abs(n.ty - n.y) < 0.5 &&
+          Math.abs(tx - n.x) < 0.5 && Math.abs(ty - n.y) < 0.5 &&
           Math.abs(n.vx) + Math.abs(n.vy) < 2;
         if (!still) allSettled = false;
       }
@@ -664,6 +849,7 @@ export class NotesEngine {
     const scrollOff =
       this.mode === "grid" ? this.scroll
       : this.mode === "scatter" ? this.scatterScroll
+      : this.mode === "wall" ? this.wallScroll
       : 0;
 
     // anchor the inspect metadata beside the held (scatter) or zoomed (grid) note
@@ -672,7 +858,9 @@ export class NotesEngine {
         ? this.dragIndex
         : this.mode === "grid" && this.gridZoom != null
           ? this.gridZoom
-          : null;
+          : this.mode === "wall" && this.wallZoom != null
+            ? this.wallZoom
+            : null;
     if (inspectI != null && this.cb.onHoldPos) {
       const n = this.notes[inspectI];
       const halfHeld = (size * n.s) / 2;
@@ -774,6 +962,11 @@ export class NotesEngine {
       }
     }
   }
+}
+
+function smoothstep(a: number, b: number, x: number) {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
 }
 
 function distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {

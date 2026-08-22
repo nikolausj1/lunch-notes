@@ -139,6 +139,10 @@ body {
   cursor: ns-resize;
 }
 
+.viewer[data-mode="wall"] .note {
+  cursor: pointer;
+}
+
 .note[data-state="drag"] {
   cursor: grabbing;
 }
@@ -353,7 +357,8 @@ body {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 5000;
+  /* above every note: notes reach z 9000 (wall focus) and 10000+ (scatter drags) */
+  z-index: 100000;
   display: flex;
   gap: 2px;
   padding: 4px;
@@ -405,7 +410,7 @@ body {
 
 .meta-panel {
   position: fixed;
-  z-index: 4500;
+  z-index: 99000;
   pointer-events: none;
 }
 
@@ -492,7 +497,7 @@ body {
   position: fixed;
   top: 16px;
   right: 22px;
-  z-index: 5000;
+  z-index: 100000;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -546,7 +551,7 @@ body {
 /* wrapper is positioned every frame by the engine, riding the held note */
 .scatter-tip {
   position: fixed;
-  z-index: 4800;
+  z-index: 99000;
   pointer-events: none;
   width: 240px;
 }
@@ -627,7 +632,7 @@ body {
 .loading {
   position: fixed;
   inset: 0;
-  z-index: 9000;
+  z-index: 200000; /* covers everything, including the fixed chrome */
   display: flex;
   flex-direction: column;
   align-items: center;

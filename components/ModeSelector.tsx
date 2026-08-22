@@ -8,6 +8,7 @@ const LABELS: Record<ViewMode, string> = {
   grid: "Grid",
   stack: "Stack",
   timeline: "Timeline",
+  wall: "Wall",
 };
 
 export function ModeSelector({
