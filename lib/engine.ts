@@ -110,7 +110,9 @@ export class NotesEngine {
       tx: 0, ty: 0, tr: 0, ts: 1, z: 0, hidden: false, culled: false, delay: 0, hoverAmt: 0,
       blurT: 0, opT: 1, fb: 0, fbv: 0,
       el: null,
-      wx: Infinity, wy: Infinity, wr: Infinity, ws: Infinity, wz: -1, wHidden: false, wState: "",
+      // wHidden starts true: CSS hides notes until the first render frame
+      // explicitly reveals the visible ones
+      wx: Infinity, wy: Infinity, wr: Infinity, ws: Infinity, wz: -1, wHidden: true, wState: "",
       wBlur: -1, wOp: -1, wFb: Infinity,
     }));
     // birth position: a pile at center (loading experience scatters from here)
@@ -923,7 +925,9 @@ export class NotesEngine {
       // layer and their lazy images never fetch — critical on iOS Safari
       const invisible = n.hidden || n.culled;
       if (invisible !== n.wHidden) {
-        el.style.display = invisible ? "none" : "";
+        // explicit "block": the stylesheet hides notes by default (pre-
+        // engine image-load stampede protection), so "" would re-hide
+        el.style.display = invisible ? "none" : "block";
         n.wHidden = invisible;
       }
       if (invisible) continue;

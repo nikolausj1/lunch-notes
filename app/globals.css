@@ -214,6 +214,10 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+  /* hidden until the engine's first frame decides visibility: before the
+     loop starts, 2,000 stacked notes would otherwise all count as "in
+     viewport" and stampede lazy image loading — the iOS OOM crash */
+  display: none;
   width: var(--note-size);
   height: var(--note-size);
   /* no will-change: a compositor layer per note (x2,000) is what crashed
