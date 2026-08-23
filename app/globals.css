@@ -555,10 +555,10 @@ body {
 
 .size-control {
   position: fixed;
-  top: 42px; /* tucked behind the nav pill, peeking out from underneath */
+  top: 53px; /* just barely tucked behind the nav pill */
   left: 50%;
   transform: translateX(-50%);
-  padding-top: 14px;
+  padding-top: 9px;
   z-index: 99990; /* just below the nav so it slides out from under it */
   display: flex;
   align-items: center;
