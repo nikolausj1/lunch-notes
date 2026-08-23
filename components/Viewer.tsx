@@ -246,7 +246,7 @@ export function Viewer() {
         const eng = engineRef.current;
         if (!eng) return;
         // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .mode-selector, .filter-bar")) return;
+        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar")) return;
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -325,10 +325,10 @@ export function Viewer() {
         )}
       </div>
 
-      <ModeSelector mode={mode} onChange={changeMode} />
-
-      {mode === "grid" && (
-        <div className="size-control" role="group" aria-label="Note size">
+      <div className="nav-stack">
+        <ModeSelector mode={mode} onChange={changeMode} />
+        {mode === "grid" && (
+          <div className="size-control" role="group" aria-label="Note size">
           <span className="size-control-label">note size</span>
           {([
             { label: "S", cols: 7 },
@@ -344,8 +344,9 @@ export function Viewer() {
               {o.label}
             </button>
           ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       <div className="filter-bar" role="group" aria-label="Filter drawings">
         {(["Chase", "Vinny"] as const).map((c) => (

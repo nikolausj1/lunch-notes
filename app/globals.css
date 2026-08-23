@@ -412,13 +412,22 @@ body {
 
 /* ------------------------------------------------------ mode selector */
 
-.mode-selector {
+/* fixed wrapper holding the nav pill and anything docked beneath it —
+   above every note (notes reach z 9000 wall focus, 10000+ scatter drags) */
+.nav-stack {
   position: fixed;
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  /* above every note: notes reach z 9000 (wall focus) and 10000+ (scatter drags) */
   z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mode-selector {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 2px;
   padding: 4px;
@@ -554,12 +563,10 @@ body {
 /* -------------------------------------------------- grid size control */
 
 .size-control {
-  position: fixed;
-  top: 53px; /* just barely tucked behind the nav pill */
-  left: 50%;
-  transform: translateX(-50%);
-  padding-top: 9px;
-  z-index: 99990; /* just below the nav so it slides out from under it */
+  /* docked to the nav pill above it, tucked just a couple px underneath */
+  position: relative;
+  z-index: 1;
+  margin-top: -3px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -604,9 +611,6 @@ body {
   box-shadow: 0 2px 5px rgba(150, 100, 30, 0.3);
 }
 
-@media (max-width: 640px) {
-  .size-control { top: 108px; }
-}
 
 /* --------------------------------------- scatter hold-to-inspect label */
 
