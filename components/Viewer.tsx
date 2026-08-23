@@ -246,7 +246,12 @@ export function Viewer() {
     return s;
   }, [mode, focus, held, drawings]);
 
-  const touchDrag = useRef<{ lastY: number; pointerId: number } | null>(null);
+  const touchDrag = useRef<{
+    lastY: number;
+    lastT: number;
+    vel: number; // scroll px/s, exponentially smoothed
+    pointerId: number;
+  } | null>(null);
   const press = useRef<{ x: number; y: number; t: number; idx: number | null } | null>(null);
 
   return (
@@ -264,7 +269,7 @@ export function Viewer() {
         eng.onPointerDown(e.clientX, e.clientY, idx);
         press.current = { x: e.clientX, y: e.clientY, t: performance.now(), idx };
         if (e.pointerType !== "mouse" && mode !== "scatter" && !eng.stackDragging) {
-          touchDrag.current = { lastY: e.clientY, pointerId: e.pointerId };
+          touchDrag.current = { lastY: e.clientY, lastT: e.timeStamp, vel: 0, pointerId: e.pointerId };
         }
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
       }}
@@ -274,13 +279,23 @@ export function Viewer() {
         eng.onPointerMove(e.clientX, e.clientY);
         const td = touchDrag.current;
         if (td && td.pointerId === e.pointerId) {
-          eng.onWheel(td.lastY - e.clientY);
+          const dy = td.lastY - e.clientY;
+          eng.onWheel(dy);
+          const dtMs = Math.max(1, e.timeStamp - td.lastT);
+          td.vel = td.vel * 0.7 + (dy / dtMs) * 1000 * 0.3;
           td.lastY = e.clientY;
+          td.lastT = e.timeStamp;
         }
       }}
       onPointerUp={(e) => {
         const eng = engineRef.current;
         eng?.onPointerUp();
+        // touch release: hand the finger's velocity to the engine as
+        // kinetic momentum (iOS-style glide)
+        const td = touchDrag.current;
+        if (eng && td && td.pointerId === e.pointerId && Math.abs(td.vel) > 120) {
+          eng.fling(td.vel);
+        }
         touchDrag.current = null;
         // a quick, stationary press in grid mode is a click: zoom the note
         const p = press.current;

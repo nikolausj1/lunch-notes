@@ -82,9 +82,14 @@ export function gridTargets(
   const padR = vp.w < 640 ? pad + 34 : pad;
   const topSafe = vp.w < 640 ? 150 : 108; // clear the stacked mobile chrome
   const gap = vp.w < 640 ? 14 : 24;
+  // phones remap S/M/L to their own column counts (4/3/2) — otherwise all
+  // three sizes clamp to the same layout and the control does nothing
+  const wanted =
+    vp.w < 640 ? (wantedCols >= 7 ? 4 : wantedCols >= 5 ? 3 : 2) : wantedCols;
   // honor the size control, but never let cells get unusably small
-  const maxCols = Math.max(2, Math.floor((vp.w - pad - padR + gap) / (72 + gap)));
-  const cols = Math.max(2, Math.min(wantedCols, maxCols));
+  const minCell = vp.w < 640 ? 56 : 72;
+  const maxCols = Math.max(2, Math.floor((vp.w - pad - padR + gap) / (minCell + gap)));
+  const cols = Math.max(2, Math.min(wanted, maxCols));
   const cell = (vp.w - pad - padR - gap * (cols - 1)) / cols;
 
   const base = baseNoteSize(vp);

@@ -60,6 +60,9 @@ export class NotesEngine {
 
   // grid
   scroll = 0; scrollTarget = 0; contentHeight = 0; gridCols = 7; // S default
+  // touch momentum (grid + wall): px/s applied to the scroll target with
+  // exponential decay, killed by any new input or hitting the ends
+  flingVel = 0;
   gridTiltI = -1; gridTiltX = 0; gridTiltY = 0;
   gridZoom: number | null = null;
   // scatter: the desk is a virtual table taller than the viewport
@@ -305,7 +308,13 @@ export class NotesEngine {
 
   // ------------------------------------------------------------- input
 
+  /** touch release momentum: continue scrolling at v px/s with decay */
+  fling(v: number) {
+    if (this.mode === "grid" || this.mode === "wall") this.flingVel = v;
+  }
+
   onWheel(dy: number) {
+    this.flingVel = 0;
     if (this.mode === "scatter") {
       // scroll down the virtual table to reach more notes
       this.scatterScrollTarget = Math.max(
@@ -398,6 +407,7 @@ export class NotesEngine {
 
   /** role: index of note pressed, or null for empty surface */
   onPointerDown(x: number, y: number, noteIndex: number | null) {
+    this.flingVel = 0; // finger down stops any glide, iOS-style
     // pointer lives in desk space; in scatter the desk scrolls
     if (this.mode === "scatter") y += this.scatterScroll;
     this.pointer.down = true;
@@ -510,6 +520,24 @@ export class NotesEngine {
         this.cb.onPeel?.(this.peelAccum / PEEL_DIST);
       }
       if (!this.stackDrag) this.peelZ *= Math.exp(-dt * 5);
+    }
+
+    // touch momentum: glide the scroll target with exponential decay
+    if (this.flingVel !== 0) {
+      const dv = this.flingVel * dt;
+      if (mode === "grid") {
+        const nt = this.scrollTarget + dv;
+        this.scrollTarget = Math.max(0, Math.min(this.maxScroll, nt));
+        if (nt <= 0 || nt >= this.maxScroll) this.flingVel = 0;
+      } else if (mode === "wall") {
+        const nt = this.wallScrollTarget + dv;
+        this.wallScrollTarget = Math.max(0, Math.min(this.maxWallScroll, nt));
+        if (nt <= 0 || nt >= this.maxWallScroll) this.flingVel = 0;
+      } else {
+        this.flingVel = 0;
+      }
+      this.flingVel *= Math.exp(-dt * 2.1);
+      if (Math.abs(this.flingVel) < 15) this.flingVel = 0;
     }
 
     // smooth internal scroll positions
