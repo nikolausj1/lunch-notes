@@ -10,6 +10,7 @@ import { ModeSelector } from "./ModeSelector";
 import { DeskSurface } from "./DeskSurface";
 import { MetadataPanel, HoldMetadata } from "./MetadataPanel";
 import { LoadingExperience } from "./LoadingExperience";
+import { TimeStrip, TimeStripHandle } from "./TimeStrip";
 
 const MIN_LOAD_MS = 1100;
 
@@ -50,6 +51,8 @@ export function Viewer() {
   const engineRef = useRef<NotesEngine | null>(null);
   const firstLoadRef = useRef(true);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const stripRef = useRef<TimeStripHandle | null>(null);
+  const gridLayoutRef = useRef<{ ys: number[]; contentH: number } | null>(null);
   const holdTipRef = useRef<HTMLDivElement | null>(null);
   const monthRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const attach = useMemo(
@@ -96,6 +99,13 @@ export function Viewer() {
             el.style.opacity = "0";
           }
         });
+      },
+      onGridLayout: (ys, contentH) => {
+        gridLayoutRef.current = { ys, contentH };
+        stripRef.current?.layout(ys, contentH);
+      },
+      onGridScroll: (scroll, viewH, contentH) => {
+        stripRef.current?.sync(scroll, viewH, contentH);
       },
     });
     engineRef.current = eng;
@@ -246,7 +256,7 @@ export function Viewer() {
         const eng = engineRef.current;
         if (!eng) return;
         // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar")) return;
+        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar, .time-strip")) return;
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -347,6 +357,16 @@ export function Viewer() {
           </div>
         )}
       </div>
+
+      {mode === "grid" && (
+        <TimeStrip
+          ref={stripRef}
+          drawings={drawings}
+          numById={numById}
+          getLayout={() => gridLayoutRef.current}
+          onJump={(y) => engineRef.current?.setGridScrollTarget(y)}
+        />
+      )}
 
       <div className="filter-bar" role="group" aria-label="Filter drawings">
         {(["Chase", "Vinny"] as const).map((c) => (

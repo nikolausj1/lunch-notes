@@ -42,6 +42,10 @@ export type EngineCallbacks = {
   onThread?: (anchors: TimelineInfo["anchors"], tension: number, vp: Viewport) => void;
   /** stack peel progress 0..1 for the current top note */
   onPeel?: (progress: number) => void;
+  /** grid layout finished: content-space y per note index + total height */
+  onGridLayout?: (ys: number[], contentHeight: number) => void;
+  /** grid scroll frame update (drives the time strip) */
+  onGridScroll?: (scroll: number, viewH: number, contentHeight: number) => void;
 };
 
 const PEEL_DIST = 280; // wheel px to fully peel one note
@@ -196,6 +200,13 @@ export class NotesEngine {
     if (mode === "wall") this.setHover(this.wallZoom);
   }
 
+  /** time strip: jump/scrub the grid to a content-space y */
+  setGridScrollTarget(y: number) {
+    if (this.mode !== "grid") return;
+    if (this.gridZoom != null) this.onGridClick(null);
+    this.scrollTarget = Math.max(0, Math.min(this.maxScroll, y));
+  }
+
   setGridCols(cols: number) {
     this.gridCols = cols;
     if (this.mode === "grid") this.applyMode("grid", false);
@@ -218,6 +229,7 @@ export class NotesEngine {
         "--grid-scale",
         (g.info.cell / this.noteSize).toFixed(4)
       );
+      this.cb.onGridLayout?.(targets.map((t) => t.y), this.contentHeight);
       this.scrollTarget = Math.min(this.scrollTarget, this.maxScroll);
       // click-to-zoom: the zoomed note floats front and center
       if (this.gridZoom != null && targets[this.gridZoom]) {
@@ -501,12 +513,10 @@ export class NotesEngine {
         (this.scatterScrollTarget - this.scatterScroll) * Math.min(1, dt * 10);
     }
     if (mode === "grid") {
-      const prev = this.scroll;
       this.scroll += (this.scrollTarget - this.scroll) * Math.min(1, dt * 10);
-      if (Math.abs(this.scroll - prev) > 0.05) {
-        // scroll shifts the whole grid: targets stay in content space,
-        // render subtracts scroll (no per-note recompute needed)
-      }
+      // scroll shifts the whole grid: targets stay in content space,
+      // render subtracts scroll (no per-note recompute needed)
+      this.cb.onGridScroll?.(this.scroll, this.vp.h, this.contentHeight);
     } else if (mode === "timeline") {
       const prevT = this.t;
       this.t += (this.tTarget - this.t) * Math.min(1, dt * 7);
