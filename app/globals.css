@@ -486,13 +486,8 @@ body {
   background: rgba(122, 106, 78, 0.5);
 }
 
-.ts-tick[data-minor="true"] {
-  width: 6px;
-  background: rgba(122, 106, 78, 0.24);
-}
-.ts-tick[data-minor="true"][data-on="true"] {
-  background: rgba(74, 63, 46, 0.7);
-}
+/* minor (half-month) ticks are identical to month ticks: every tick is
+   the same length and weight unless it's a year marker or activated */
 
 /* the ink range: months currently on screen darken; their length is a
    bulge computed per-frame (longest mid-range, tapering at the edges) */

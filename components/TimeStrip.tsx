@@ -118,7 +118,7 @@ export const TimeStrip = forwardRef<
       if (Math.abs(d) <= 1.25) {
         // cosine falloff: longest at center, tapering at the ends
         const bulge = Math.cos(Math.max(-1, Math.min(1, d)) * Math.PI * 0.5);
-        const base = el.dataset.minor === "true" ? 6 : el.dataset.jan === "true" ? 20 : 11;
+        const base = el.dataset.jan === "true" ? 20 : 11;
         // one smooth silhouette: the curve sets the length, not the base
         el.style.width = Math.max(base, 8 + bulge * 30) + "px";
         el.dataset.on = String(bulge > 0.12);
