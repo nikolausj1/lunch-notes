@@ -122,9 +122,11 @@ export const TimeStrip = forwardRef<
         // one smooth silhouette: the curve sets the length, not the base
         el.style.width = Math.max(base, 8 + bulge * 30) + "px";
         el.dataset.on = String(bulge > 0.12);
+        el.dataset.bulge = bulge.toFixed(2); // hover magnify eases off here
       } else {
         el.style.width = "";
         el.dataset.on = "false";
+        el.dataset.bulge = "0";
       }
     });
   };
@@ -136,7 +138,8 @@ export const TimeStrip = forwardRef<
     if (!rail) return;
     const h = rail.clientHeight || 1;
     const y = frac * h - (center ? 0.75 : 0);
-    el.style.top = Math.round(y * 2) / 2 + "px";
+    const dpr = window.devicePixelRatio || 1;
+    el.style.top = Math.round(y * dpr) / dpr + "px"; // true device-pixel grid
     el.dataset.frac = String(frac);
   };
 
@@ -207,11 +210,14 @@ export const TimeStrip = forwardRef<
     if (!rail || !g) return;
     const r = rail.getBoundingClientRect();
     const f = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
-    // magnify ticks near the cursor
+    // magnify ticks near the cursor — length only (scaleX), so thickness
+    // stays uniform. Amplitude is doubled vs the original, and halved for
+    // ticks already extended by the position bulge.
     rail.querySelectorAll<HTMLElement>("[data-tick]").forEach((el) => {
       const d = Math.abs(Number(el.dataset.frac || 0) * r.height - f * r.height);
       const k = Math.exp(-(d / 64) * (d / 64));
-      el.style.transform = k > 0.03 ? `scaleX(${1 + k * 1.8}) scaleY(${1 + k * 1.3})` : "";
+      const amp = 3.6 * (1 - 0.5 * Number(el.dataset.bulge || 0));
+      el.style.transform = k > 0.03 ? `scaleX(${1 + k * amp})` : "";
     });
     // readout + jump target: the rail is a uniform calendar axis, so the
     // cursor maps to a month index directly; jumps interpolate between the
