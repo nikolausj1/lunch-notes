@@ -80,7 +80,7 @@ export function gridTargets(
   const pad = Math.max(20, vp.w * 0.04);
   // phones reserve a right gutter so notes never run under the time strip
   const padR = vp.w < 640 ? pad + 34 : pad;
-  const topSafe = vp.w < 640 ? 150 : 108; // clear the stacked mobile chrome
+  const topSafe = vp.w < 640 ? 168 : 108; // clear the stacked mobile chrome
   const gap = vp.w < 640 ? 14 : 24;
   // phones remap S/M/L to their own column counts (4/3/2) — otherwise all
   // three sizes clamp to the same layout and the control does nothing

@@ -195,13 +195,15 @@ body {
 }
 
 @media (max-width: 640px) {
+  /* phones: the title leads, the mode switcher sits beneath it */
   .title-slip h1 { font-size: 18px; }
   .title-slip {
     padding: 7px 11px 6px;
-    top: 104px; /* below the mode selector AND the note-size pill */
+    top: 8px;
     left: 10px;
   }
   .title-slip p { font-size: 9px; }
+  .nav-stack { top: 66px; }
 }
 
 /* -------------------------------------------------------------- notes */
@@ -546,7 +548,7 @@ body {
 .ts-tip b { color: #a06b22; }
 
 @media (max-width: 640px) {
-  .time-strip { width: 40px; right: 0; top: 160px; bottom: 96px; }
+  .time-strip { width: 40px; right: 0; top: 176px; bottom: 96px; }
   .ts-tick { right: 10px; }
   .ts-year { display: none; }
 }

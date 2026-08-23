@@ -59,7 +59,7 @@ export class NotesEngine {
   cb: EngineCallbacks;
 
   // grid
-  scroll = 0; scrollTarget = 0; contentHeight = 0; gridCols = 7; // S default
+  scroll = 0; scrollTarget = 0; contentHeight = 0; gridCols = 5; // M default
   // touch momentum (grid + wall): px/s applied to the scroll target with
   // exponential decay, killed by any new input or hitting the ends
   flingVel = 0;

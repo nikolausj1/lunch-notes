@@ -43,7 +43,7 @@ export function Viewer() {
     return m;
   }, [all]);
   const [mode, setMode] = useState<ViewMode>("grid");
-  const [gridCols, setGridCols] = useState(7); // S is the default note size
+  const [gridCols, setGridCols] = useState(5); // M is the default note size
   const [focus, setFocus] = useState<number | null>(null);
   const [held, setHeld] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
