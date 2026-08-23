@@ -486,6 +486,15 @@ body {
   background: rgba(122, 106, 78, 0.5);
 }
 
+.ts-tick[data-minor="true"] {
+  width: 6px;
+  background: rgba(122, 106, 78, 0.24);
+}
+.ts-tick[data-minor="true"][data-on="true"] {
+  width: 11px;
+  background: rgba(74, 63, 46, 0.7);
+}
+
 /* the ink range: months currently on screen are written dark and longer */
 .ts-tick[data-on="true"] {
   background: rgba(74, 63, 46, 0.85);

@@ -95,13 +95,22 @@ export const TimeStrip = forwardRef<
   const reposition = () => {
     const rail = railRef.current;
     if (!rail) return;
+    const g = geom.current;
     rail.querySelectorAll<HTMLElement>("[data-tick]").forEach((el, k) => {
-      const t = ticks[k];
-      if (!t) return;
-      const g = geom.current;
-      const y = g ? g.ys[t.noteIndex] ?? 0 : 0;
-      el.dataset.y = String(y);
-      el.style.top = fracOf(t) * 100 + "%";
+      if (k < ticks.length) {
+        const t = ticks[k];
+        el.dataset.y = String(g ? g.ys[t.noteIndex] ?? 0 : 0);
+        el.style.top = fracOf(t) * 100 + "%";
+      } else {
+        // minor tick: midway between adjacent months (double density)
+        const a = ticks[k - ticks.length];
+        const b = ticks[k - ticks.length + 1];
+        if (!a || !b) return;
+        const ya = g ? g.ys[a.noteIndex] ?? 0 : 0;
+        const yb = g ? g.ys[b.noteIndex] ?? 0 : 0;
+        el.dataset.y = String((ya + yb) / 2);
+        el.style.top = ((fracOf(a) + fracOf(b)) / 2) * 100 + "%";
+      }
     });
     const jans = ticks.filter((t) => t.jan);
     rail.querySelectorAll<HTMLElement>(".ts-year").forEach((el, k) => {
@@ -195,6 +204,9 @@ export const TimeStrip = forwardRef<
     >
       {ticks.map((t) => (
         <span key={t.key} data-tick data-jan={t.jan} data-on="false" className="ts-tick" />
+      ))}
+      {ticks.slice(0, -1).map((t) => (
+        <span key={"mid" + t.key} data-tick data-minor="true" data-on="false" className="ts-tick" />
       ))}
       {ticks.filter((t) => t.jan).map((t) => (
         <span key={"y" + t.key} className="ts-year" style={{ top: fracOf(t) * 100 + "%" }}>
