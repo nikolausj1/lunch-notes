@@ -491,17 +491,13 @@ body {
   background: rgba(122, 106, 78, 0.24);
 }
 .ts-tick[data-minor="true"][data-on="true"] {
-  width: 11px;
   background: rgba(74, 63, 46, 0.7);
 }
 
-/* the ink range: months currently on screen are written dark and longer */
+/* the ink range: months currently on screen darken; their length is a
+   bulge computed per-frame (longest mid-range, tapering at the edges) */
 .ts-tick[data-on="true"] {
   background: rgba(74, 63, 46, 0.85);
-  width: 18px;
-}
-.ts-tick[data-jan="true"][data-on="true"] {
-  width: 27px;
 }
 
 .ts-year {

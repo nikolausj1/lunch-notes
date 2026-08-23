@@ -81,14 +81,51 @@ export const TimeStrip = forwardRef<
   const fracOf = (t: Tick) =>
     ticks.length < 2 ? 0 : (ticks.length - 1 - t.idx) / (ticks.length - 1);
 
+  /** rail fraction (0..1, top=newest) for a content-space y, interpolated
+   *  between month anchors */
+  const railFracFor = (y: number) => {
+    const g = geom.current;
+    if (!g || ticks.length < 2) return 0;
+    // ticks[0] = oldest (rail frac 1, LARGEST content y); anchors shrink
+    // as the index climbs toward the newest month at the rail top
+    const anchor = (k: number) => g.ys[ticks[k].noteIndex] ?? 0;
+    if (y >= anchor(0)) return 1;
+    if (y <= anchor(ticks.length - 1)) return 0;
+    for (let k = 0; k < ticks.length - 1; k++) {
+      const ya = anchor(k); // larger
+      const yb = anchor(k + 1); // smaller
+      if (y <= ya && y >= yb) {
+        const u = (ya - y) / Math.max(1, ya - yb);
+        return fracOf(ticks[k]) + (fracOf(ticks[k + 1]) - fracOf(ticks[k])) * u;
+      }
+    }
+    return 0;
+  };
+
   const applyInk = () => {
     const rail = railRef.current;
     const g = geom.current;
     if (!rail || !g) return;
-    const els = rail.querySelectorAll<HTMLElement>("[data-tick]");
-    els.forEach((el) => {
-      const y = Number(el.dataset.y);
-      el.dataset.on = String(y >= win.current.top - 40 && y <= win.current.bottom + 40);
+    // the indicator is a bulge in RAIL space: centered on the visible
+    // range, never narrower than a handful of ticks so the curve reads
+    const fa = railFracFor(win.current.top);
+    const fb = railFracFor(win.current.bottom);
+    const center = (fa + fb) / 2;
+    const half = Math.max(Math.abs(fb - fa) / 2, 0.05);
+    rail.querySelectorAll<HTMLElement>("[data-tick]").forEach((el) => {
+      const f = parseFloat(el.style.top) / 100;
+      const d = (f - center) / half;
+      if (Math.abs(d) <= 1.25) {
+        // cosine falloff: longest at center, tapering at the ends
+        const bulge = Math.cos(Math.max(-1, Math.min(1, d)) * Math.PI * 0.5);
+        const base = el.dataset.minor === "true" ? 6 : el.dataset.jan === "true" ? 20 : 11;
+        // one smooth silhouette: the curve sets the length, not the base
+        el.style.width = Math.max(base, 8 + bulge * 30) + "px";
+        el.dataset.on = String(bulge > 0.12);
+      } else {
+        el.style.width = "";
+        el.dataset.on = "false";
+      }
     });
   };
 
