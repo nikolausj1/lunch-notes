@@ -18,6 +18,8 @@ type NoteSim = {
   tx: number; ty: number; tr: number; ts: number;
   z: number;
   hidden: boolean;
+  /** offscreen in a scrolling mode: skip simulation + paint (2,000-note scale) */
+  culled: boolean;
   delay: number;      // ms before this note starts moving (stagger)
   hoverAmt: number;   // 0..1 proximity glow used for shadow/lift
   // timeline depth-of-field + front/back pendulum swing
@@ -101,7 +103,7 @@ export class NotesEngine {
     this.cb = cb;
     this.notes = drawings.map((d) => ({
       x: 0, y: 0, r: 0, s: 0.2, vx: 0, vy: 0, vr: 0,
-      tx: 0, ty: 0, tr: 0, ts: 1, z: 0, hidden: false, delay: 0, hoverAmt: 0,
+      tx: 0, ty: 0, tr: 0, ts: 1, z: 0, hidden: false, culled: false, delay: 0, hoverAmt: 0,
       blurT: 0, opT: 1, fb: 0, fbv: 0,
       el: null,
       wx: Infinity, wy: Infinity, wr: Infinity, ws: Infinity, wz: -1, wHidden: false, wState: "",
@@ -618,15 +620,34 @@ export class NotesEngine {
 
     let allSettled = true;
 
+    // scroll-mode culling: a note whose rest position is more than a screen
+    // outside the viewport neither simulates nor paints
+    const cullScroll =
+      mode === "wall" ? this.wallScroll
+      : mode === "grid" ? this.scroll
+      : mode === "scatter" && this.settled ? this.scatterScroll
+      : null;
+    const cullTop = cullScroll != null ? cullScroll - this.vp.h : 0;
+    const cullBot = cullScroll != null ? cullScroll + this.vp.h * 2 : 0;
+
     for (let i = 0; i < this.notes.length; i++) {
       const n = this.notes[i];
-      if (n.hidden) {
+      const cullY = mode === "scatter" ? n.y : n.ty; // scatter roams free
+      n.culled =
+        cullScroll != null &&
+        (cullY < cullTop || cullY > cullBot) &&
+        this.dragIndex !== i &&
+        !(mode === "wall" && i === this.wallZoom);
+      if (n.hidden || n.culled) {
         // teleport while invisible: when this note is revealed later (e.g.
         // rising through the stack as notes peel off), it must already be
-        // resting in place — never seen flying in from across the desk
-        n.x = n.tx; n.y = n.ty; n.r = n.tr; n.s = n.ts;
-        n.vx = 0; n.vy = 0; n.vr = 0;
-        n.delay = 0;
+        // resting in place — never seen flying in from across the desk.
+        // (scatter keeps culled notes where they lie — physics owns them)
+        if (n.hidden || mode !== "scatter") {
+          n.x = n.tx; n.y = n.ty; n.r = n.tr; n.s = n.ts;
+          n.vx = 0; n.vy = 0; n.vr = 0;
+          n.delay = 0;
+        }
         continue;
       }
 
@@ -781,14 +802,14 @@ export class NotesEngine {
       const minD = size * 0.72;
       for (let i = 0; i < this.notes.length; i++) {
         const a = this.notes[i];
-        if (a.hidden) continue;
+        if (a.hidden || a.culled) continue;
         const sp = Math.hypot(a.vx, a.vy);
         if (sp < 30 && this.dragIndex !== i) continue;
         const strength = this.dragIndex === i ? 1 : Math.min(1, sp / 260);
         for (let j = 0; j < this.notes.length; j++) {
           if (i === j) continue;
           const b = this.notes[j];
-          if (b.hidden) continue;
+          if (b.hidden || b.culled) continue;
           const dx = b.x - a.x, dy = b.y - a.y;
           const d = Math.hypot(dx, dy);
           if (d < minD && d > 0.001) {
@@ -805,7 +826,7 @@ export class NotesEngine {
       let best: { i: number; z: number } | null = null;
       for (let i = 0; i < this.notes.length; i++) {
         const n = this.notes[i];
-        if (n.hidden) continue;
+        if (n.hidden || n.culled) continue;
         const half = (size * n.s) / 2;
         if (
           Math.abs(p.x - n.x) < half &&
@@ -875,11 +896,12 @@ export class NotesEngine {
       const n = this.notes[i];
       const el = n.el;
       if (!el) continue;
-      if (n.hidden !== n.wHidden) {
-        el.style.visibility = n.hidden ? "hidden" : "visible";
-        n.wHidden = n.hidden;
+      const invisible = n.hidden || n.culled;
+      if (invisible !== n.wHidden) {
+        el.style.visibility = invisible ? "hidden" : "visible";
+        n.wHidden = invisible;
       }
-      if (n.hidden) continue;
+      if (invisible) continue;
       let x = n.x - half;
       let y = n.y - half - scrollOff;
       let r = n.r;

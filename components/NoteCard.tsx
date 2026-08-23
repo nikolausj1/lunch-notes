@@ -29,7 +29,7 @@ function NoteCardInner({ drawing, index, featured, attach }: Props) {
           src={drawing.thumbSrc}
           alt={drawing.title ?? "Lunch drawing"}
           draggable={false}
-          loading={index < 40 ? "eager" : "lazy"}
+          loading="lazy"
         />
         {featured && (
           <img

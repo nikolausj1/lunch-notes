@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getDrawings } from "@/lib/drawings";
+import { getDrawings, tagCounts } from "@/lib/drawings";
 import { ViewMode } from "@/lib/types";
 import { NotesEngine } from "@/lib/engine";
 import { monthKey, formatMonth } from "@/lib/dates";
@@ -13,15 +13,28 @@ import { LoadingExperience } from "./LoadingExperience";
 
 const MIN_LOAD_MS = 1100;
 
-function getCount(): number {
-  if (typeof window === "undefined") return 120;
+/** ?count=N keeps a recent slice (testing); default is the whole archive */
+function getCount(): number | undefined {
+  if (typeof window === "undefined") return undefined;
   const c = Number(new URLSearchParams(window.location.search).get("count"));
-  return Number.isFinite(c) && c > 0 ? Math.min(500, Math.max(1, c)) : 120;
+  return Number.isFinite(c) && c > 0 ? c : undefined;
 }
 
 export function Viewer() {
   const [count] = useState(getCount);
-  const drawings = useMemo(() => getDrawings(count), [count]);
+  const all = useMemo(() => getDrawings(count), [count]);
+  const [childFilter, setChildFilter] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const tags = useMemo(() => tagCounts(all), [all]);
+  const drawings = useMemo(
+    () =>
+      all.filter(
+        (d) =>
+          (!childFilter || d.child === childFilter) &&
+          (!tagFilter || (d.tags ?? []).includes(tagFilter))
+      ),
+    [all, childFilter, tagFilter]
+  );
   const [mode, setMode] = useState<ViewMode>("wall");
   const [gridCols, setGridCols] = useState(5);
   const [focus, setFocus] = useState<number | null>(null);
@@ -29,6 +42,7 @@ export function Viewer() {
   const [loaded, setLoaded] = useState(false);
 
   const engineRef = useRef<NotesEngine | null>(null);
+  const firstLoadRef = useRef(true);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const holdTipRef = useRef<HTMLDivElement | null>(null);
   const monthRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -103,9 +117,10 @@ export function Viewer() {
     });
     if (surfaceRef.current) ro.observe(surfaceRef.current);
 
-    // preload thumbnails, then reveal (PRD §16)
+    // preload thumbnails, then reveal (PRD §16). The wall (default mode)
+    // shows the NEWEST drawings first, so preload from the end.
     const started = performance.now();
-    const preload = drawings.slice(0, 160).map(
+    const preload = drawings.slice(-160).map(
       (d) =>
         new Promise<void>((res) => {
           const img = new Image();
@@ -118,7 +133,11 @@ export function Viewer() {
       Promise.allSettled(preload),
       new Promise((res) => setTimeout(res, 4500)),
     ]).then(() => {
-      const wait = Math.max(0, MIN_LOAD_MS - (performance.now() - started));
+      // the loading beat only plays once; filter changes rebuild instantly
+      const wait = firstLoadRef.current
+        ? Math.max(0, MIN_LOAD_MS - (performance.now() - started))
+        : 0;
+      firstLoadRef.current = false;
       setTimeout(() => {
         if (cancelled) return;
         setLoaded(true);
@@ -217,7 +236,7 @@ export function Viewer() {
         const eng = engineRef.current;
         if (!eng) return;
         // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .mode-selector")) return;
+        if ((e.target as HTMLElement).closest("button, .mode-selector, .filter-bar")) return;
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -261,7 +280,7 @@ export function Viewer() {
       }}
       onPointerLeave={() => engineRef.current?.pointerLeft()}
     >
-      <DeskSurface count={drawings.length} />
+      <DeskSurface count={all.length} />
 
       <div className="thread-months" data-visible={mode === "timeline"} aria-hidden>
         {monthMarks.map((m, k) => (
@@ -315,6 +334,43 @@ export function Viewer() {
           ))}
         </div>
       )}
+
+      <div className="filter-bar" role="group" aria-label="Filter drawings">
+        {(["Chase", "Vinny"] as const).map((c) => (
+          <button
+            key={c}
+            className="filter-btn"
+            data-active={childFilter === c}
+            onClick={() => setChildFilter(childFilter === c ? null : c)}
+          >
+            <span className={`child-dot child-${c.toLowerCase()}`} /> {c}
+          </button>
+        ))}
+        <select
+          className="filter-select"
+          value={tagFilter ?? ""}
+          onChange={(e) => setTagFilter(e.target.value || null)}
+          aria-label="Filter by subject"
+        >
+          <option value="">every subject</option>
+          {tags.map(([t, n]) => (
+            <option key={t} value={t}>
+              {t} ({n})
+            </option>
+          ))}
+        </select>
+        {(childFilter || tagFilter) && (
+          <button
+            className="filter-btn filter-clear"
+            onClick={() => {
+              setChildFilter(null);
+              setTagFilter(null);
+            }}
+          >
+            {drawings.length.toLocaleString()} shown · clear ×
+          </button>
+        )}
+      </div>
 
       <MetadataPanel
         drawing={focus != null ? drawings[focus] ?? null : null}

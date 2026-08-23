@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LunchDrawing, ViewMode } from "@/lib/types";
 import { formatLong } from "@/lib/dates";
+import { ageGradeLabel } from "@/lib/kids";
 
 /**
  * Current-note metadata for Stack and Timeline modes.
@@ -35,6 +36,9 @@ export function MetadataPanel({
               {drawing.child && (
                 <span className={`meta-child child-bg-${drawing.child.toLowerCase()}`}>
                   {drawing.child}
+                  {ageGradeLabel(drawing.child, drawing.date) && (
+                    <span className="meta-age"> · {ageGradeLabel(drawing.child, drawing.date)}</span>
+                  )}
                 </span>
               )}
               {drawing.tags?.map((t) => (
@@ -75,6 +79,9 @@ export const HoldMetadata = forwardRef<
               {drawing.child && (
                 <span className={`meta-child child-bg-${drawing.child.toLowerCase()}`}>
                   {drawing.child}
+                  {ageGradeLabel(drawing.child, drawing.date) && (
+                    <span className="meta-age"> · {ageGradeLabel(drawing.child, drawing.date)}</span>
+                  )}
                 </span>
               )}
               {drawing.tags?.map((t) => (
