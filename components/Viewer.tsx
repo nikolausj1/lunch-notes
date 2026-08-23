@@ -42,7 +42,7 @@ export function Viewer() {
     all.forEach((d, i) => m.set(d.id, i + 1));
     return m;
   }, [all]);
-  const [mode, setMode] = useState<ViewMode>("wall");
+  const [mode, setMode] = useState<ViewMode>("grid");
   const [gridCols, setGridCols] = useState(7); // S is the default note size
   const [focus, setFocus] = useState<number | null>(null);
   const [held, setHeld] = useState<number | null>(null);
@@ -114,7 +114,9 @@ export function Viewer() {
     }
     eng.setRoot(surfaceRef.current);
     // if the engine is recreated mid-session (fast refresh, strict mode),
-    // adopt the mode the UI is already showing instead of resetting
+    // adopt the mode AND grid size the UI is already showing — the engine's
+    // internal defaults must never disagree with the controls
+    eng.setGridCols(gridCols);
     if (mode !== "scatter") eng.setMode(mode);
     // NoteCard ref callbacks fired before the engine existed — attach now
     surfaceRef.current

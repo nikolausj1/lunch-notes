@@ -59,7 +59,7 @@ export class NotesEngine {
   cb: EngineCallbacks;
 
   // grid
-  scroll = 0; scrollTarget = 0; contentHeight = 0; gridCols = 5;
+  scroll = 0; scrollTarget = 0; contentHeight = 0; gridCols = 7; // S default
   gridTiltI = -1; gridTiltX = 0; gridTiltY = 0;
   gridZoom: number | null = null;
   // scatter: the desk is a virtual table taller than the viewport

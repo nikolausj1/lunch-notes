@@ -150,10 +150,10 @@ body {
 
 .loading-story {
   font-family: var(--font-hand), cursive;
-  font-size: 24px;
+  font-size: 34px;
   color: var(--ink);
   margin: 0;
-  max-width: min(560px, 84vw);
+  max-width: min(700px, 86vw);
   text-align: center;
   line-height: 1.45;
 }
