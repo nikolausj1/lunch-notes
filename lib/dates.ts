@@ -15,6 +15,12 @@ export function formatShort(date: string): string {
   return `${MONTHS[m]} ${d}`;
 }
 
+/** "Dec 10, 2025" */
+export function formatShortYear(date: string): string {
+  const { y, m, d } = parseISO(date);
+  return `${MONTHS[m]} ${d}, ${y}`;
+}
+
 /** "December 10, 2025" */
 export function formatLong(date: string): string {
   const { y, m, d } = parseISO(date);

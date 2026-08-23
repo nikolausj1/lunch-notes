@@ -35,6 +35,12 @@ export function Viewer() {
       ),
     [all, childFilter, tagFilter]
   );
+  // running number in the whole archive (oldest = #1), stable under filters
+  const numById = useMemo(() => {
+    const m = new Map<string, number>();
+    all.forEach((d, i) => m.set(d.id, i + 1));
+    return m;
+  }, [all]);
   const [mode, setMode] = useState<ViewMode>("wall");
   const [gridCols, setGridCols] = useState(5);
   const [focus, setFocus] = useState<number | null>(null);
@@ -308,6 +314,7 @@ export function Viewer() {
             index={i}
             featured={featured.has(d.id)}
             hires={mode === "grid" && gridCols <= 5}
+            num={numById.get(d.id) ?? 0}
             attach={attach}
           />
         ))}

@@ -2,7 +2,7 @@
 
 import { memo, CSSProperties } from "react";
 import { LunchDrawing } from "@/lib/types";
-import { formatShort } from "@/lib/dates";
+import { formatShortYear } from "@/lib/dates";
 
 type Props = {
   drawing: LunchDrawing;
@@ -11,10 +11,12 @@ type Props = {
   featured: boolean;
   /** cells render large (big grid): use the display image as the base */
   hires?: boolean;
+  /** running number in the whole archive, oldest = 1 */
+  num: number;
   attach: (i: number, el: HTMLDivElement | null) => void;
 };
 
-function NoteCardInner({ drawing, index, featured, hires, attach }: Props) {
+function NoteCardInner({ drawing, index, featured, hires, num, attach }: Props) {
   return (
     <div
       className="note"
@@ -47,8 +49,11 @@ function NoteCardInner({ drawing, index, featured, hires, attach }: Props) {
       </div>
       <span className="note-tape" aria-hidden />
       <div className="note-label">
-        <span className="note-label-date">{formatShort(drawing.date)}</span>
-        {drawing.child && <span className={`child-dot child-${drawing.child.toLowerCase()}`} />}
+        <span className="note-label-left">
+          {formatShortYear(drawing.date)}
+          {drawing.child && <span className={`child-dot child-${drawing.child.toLowerCase()}`} />}
+        </span>
+        <span className="note-label-num">#{num.toLocaleString()}</span>
       </div>
     </div>
   );
@@ -56,6 +61,12 @@ function NoteCardInner({ drawing, index, featured, hires, attach }: Props) {
 
 export const NoteCard = memo(
   NoteCardInner,
+  // index MUST participate: it's the engine's element mapping (data-note-i),
+  // and it shifts when the archive is filtered
   (a, b) =>
-    a.drawing.id === b.drawing.id && a.featured === b.featured && a.hires === b.hires
+    a.drawing.id === b.drawing.id &&
+    a.featured === b.featured &&
+    a.hires === b.hires &&
+    a.index === b.index &&
+    a.num === b.num
 );
