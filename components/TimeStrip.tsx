@@ -210,14 +210,20 @@ export const TimeStrip = forwardRef<
     if (!rail || !g) return;
     const r = rail.getBoundingClientRect();
     const f = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
-    // magnify ticks near the cursor — length only (scaleX), so thickness
-    // stays uniform. Amplitude is doubled vs the original, and halved for
-    // ticks already extended by the position bulge.
+    // magnify ticks near the cursor — length only (scaleX), thickness
+    // never changes. The magnification is ADDITIVE in pixels (not a
+    // multiplier), so ticks already extended by the position bulge don't
+    // compound into a mega-bulge; they get half the addition, everything
+    // else gets the full doubled effect.
     rail.querySelectorAll<HTMLElement>("[data-tick]").forEach((el) => {
       const d = Math.abs(Number(el.dataset.frac || 0) * r.height - f * r.height);
       const k = Math.exp(-(d / 64) * (d / 64));
-      const amp = 3.6 * (1 - 0.5 * Number(el.dataset.bulge || 0));
-      el.style.transform = k > 0.03 ? `scaleX(${1 + k * amp})` : "";
+      if (k <= 0.03) { el.style.transform = ""; return; }
+      const bulge = Number(el.dataset.bulge || 0);
+      const current = parseFloat(el.style.width) ||
+        (el.dataset.jan === "true" ? 20 : 11);
+      const addPx = k * 40 * (1 - 0.5 * bulge);
+      el.style.transform = `scaleX(${1 + addPx / current})`;
     });
     // readout + jump target: the rail is a uniform calendar axis, so the
     // cursor maps to a month index directly; jumps interpolate between the
