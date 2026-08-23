@@ -13,4 +13,4 @@ export type LunchDrawing = {
 
 export type ViewMode = "scatter" | "grid" | "stack" | "timeline" | "wall";
 
-export const MODES: ViewMode[] = ["wall", "scatter", "grid", "stack", "timeline"];
+export const MODES: ViewMode[] = ["wall", "grid", "stack", "timeline", "scatter"];

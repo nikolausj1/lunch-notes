@@ -212,6 +212,12 @@ export class NotesEngine {
       const g = gridTargets(this.drawings, this.vp, this.gridCols);
       targets = g.targets;
       this.contentHeight = g.info.contentHeight;
+      // labels render at a constant size regardless of note size (CSS
+      // divides by the cell scale)
+      this.root?.style.setProperty(
+        "--grid-scale",
+        (g.info.cell / this.noteSize).toFixed(4)
+      );
       this.scrollTarget = Math.min(this.scrollTarget, this.maxScroll);
       // click-to-zoom: the zoomed note floats front and center
       if (this.gridZoom != null && targets[this.gridZoom]) {
