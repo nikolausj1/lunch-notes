@@ -559,8 +559,10 @@ export class NotesEngine {
       this.tensionVel += ((tensionGoal - this.tension) * 26 - this.tensionVel * 6) * dt;
       this.tension = Math.max(-0.05, Math.min(1.15, this.tension + this.tensionVel * dt));
       // pulling the string swings the hanging notes front/back (rotateX);
-      // each note is an underdamped pendulum chasing the swing target
-      this.swing = Math.max(-26, Math.min(26, tVel * 9));
+      // each note is an underdamped pendulum chasing the swing target.
+      // High gain + low damping: starting and stopping a scroll throws the
+      // notes into a big, clearly visible swing that rings down afterward.
+      this.swing = Math.max(-52, Math.min(52, tVel * 18));
       const tl = timelineTargets(this.drawings, this.vp, this.t);
       tl.targets.forEach((tt, i) => {
         const note = this.notes[i];
@@ -570,7 +572,7 @@ export class NotesEngine {
         note.opT = tt.opacity ?? 1;
         if (!note.hidden) {
           const phase = 0.75 + hash(this.drawings[i].id + ":ph") * 0.5;
-          note.fbv += ((this.swing * phase - note.fb) * 26 - note.fbv * 3.4) * dt;
+          note.fbv += ((this.swing * phase - note.fb) * 30 - note.fbv * 2.0) * dt;
           note.fb += note.fbv * dt;
         }
       });

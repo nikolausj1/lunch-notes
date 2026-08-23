@@ -203,7 +203,6 @@ body {
     left: 10px;
   }
   .title-slip p { font-size: 9px; }
-  .nav-stack { top: 66px; }
 }
 
 /* -------------------------------------------------------------- notes */
@@ -610,6 +609,12 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* phones: the title slip leads at the very top; the nav drops below it.
+   (This override must come AFTER the .nav-stack base rule to win.) */
+@media (max-width: 640px) {
+  .nav-stack { top: 66px; }
 }
 
 .mode-selector {
