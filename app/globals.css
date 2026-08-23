@@ -66,14 +66,104 @@ body {
   position: absolute;
   top: 18px;
   left: 22px;
-  z-index: 4000;
+  z-index: 99500; /* above the notes: it's clickable (the origin story door) */
   background: var(--paper);
   padding: 10px 18px 9px;
   transform: rotate(-2.2deg);
   box-shadow:
     0 1px 2px rgba(80, 65, 40, 0.18),
     0 4px 10px rgba(80, 65, 40, 0.12);
-  pointer-events: none;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.title-slip:hover {
+  transform: rotate(-1.2deg) scale(1.03);
+}
+
+.slip-hint {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: #a06b22;
+}
+
+/* --------------------------------------------------- origin story sheet */
+
+.story-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150000;
+  background: rgba(52, 42, 26, 0.42);
+  animation: story-dim 0.25s ease;
+}
+
+@keyframes story-dim {
+  from { opacity: 0; }
+}
+
+.story-sheet {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  width: min(430px, calc(100vw - 40px));
+  background: var(--paper);
+  padding: 20px 24px 18px;
+  transform: rotate(-1deg);
+  transform-origin: top left;
+  box-shadow:
+    0 2px 4px rgba(80, 65, 40, 0.2),
+    0 18px 44px rgba(60, 48, 28, 0.35);
+  animation: story-unfold 0.3s cubic-bezier(0.2, 1.2, 0.3, 1);
+}
+
+@keyframes story-unfold {
+  from { transform: rotate(-2.2deg) scale(0.24); opacity: 0.4; }
+}
+
+.story-sheet h2 {
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+
+.story-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.story-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* -------------------------------------------- loading story additions */
+
+.loading-story {
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  color: var(--ink);
+  margin: 0;
+  max-width: min(560px, 84vw);
+  text-align: center;
+  line-height: 1.45;
+}
+
+.loading-count {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: -14px 0 0;
 }
 
 .title-slip h1 {
@@ -779,7 +869,8 @@ body {
   justify-content: center;
   gap: 26px;
   background: var(--desk);
-  transition: opacity 0.5s ease;
+  /* slow fade: the arriving post-its visibly cover the story line */
+  transition: opacity 1.3s ease;
 }
 
 .loading[data-done="true"] {

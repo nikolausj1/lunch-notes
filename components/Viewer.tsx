@@ -12,7 +12,7 @@ import { MetadataPanel, HoldMetadata } from "./MetadataPanel";
 import { LoadingExperience } from "./LoadingExperience";
 import { TimeStrip, TimeStripHandle } from "./TimeStrip";
 
-const MIN_LOAD_MS = 1100;
+const MIN_LOAD_MS = 1700; // long enough to read the story line, no longer
 
 /** ?count=N keeps a recent slice (testing); default is the whole archive */
 function getCount(): number | undefined {
@@ -256,7 +256,7 @@ export function Viewer() {
         const eng = engineRef.current;
         if (!eng) return;
         // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar, .time-strip")) return;
+        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar, .time-strip, .title-slip, .story-backdrop")) return;
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -427,7 +427,7 @@ export function Viewer() {
           </div>
         )}
 
-      <LoadingExperience done={loaded} />
+      <LoadingExperience done={loaded} count={all.length} />
     </div>
   );
 }
