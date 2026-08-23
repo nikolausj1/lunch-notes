@@ -195,12 +195,13 @@ body {
 }
 
 @media (max-width: 640px) {
-  .title-slip h1 { font-size: 20px; }
+  .title-slip h1 { font-size: 18px; }
   .title-slip {
-    padding: 8px 12px 7px;
-    top: 72px; /* below the mode selector, which needs the full width */
-    left: 12px;
+    padding: 7px 11px 6px;
+    top: 104px; /* below the mode selector AND the note-size pill */
+    left: 10px;
   }
+  .title-slip p { font-size: 9px; }
 }
 
 /* -------------------------------------------------------------- notes */
@@ -435,6 +436,19 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  white-space: nowrap;
+}
+
+.nl-short { display: none; }
+
+@media (max-width: 640px) {
+  /* phones: compact date (no year), smaller constant label size, no wrap */
+  .nl-full { display: none; }
+  .nl-short { display: inline; }
+  .viewer[data-mode="grid"] .note-label {
+    font-size: calc(10px / var(--grid-scale, 1));
+    white-space: nowrap;
+  }
 }
 
 .note-label-num {
@@ -532,7 +546,8 @@ body {
 .ts-tip b { color: #a06b22; }
 
 @media (max-width: 640px) {
-  .time-strip { width: 34px; right: 4px; }
+  .time-strip { width: 40px; right: 0; top: 160px; bottom: 96px; }
+  .ts-tick { right: 10px; }
   .ts-year { display: none; }
 }
 

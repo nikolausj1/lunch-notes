@@ -2,7 +2,7 @@
 
 import { memo, CSSProperties } from "react";
 import { LunchDrawing } from "@/lib/types";
-import { formatShortYear } from "@/lib/dates";
+import { formatShort, formatShortYear } from "@/lib/dates";
 
 type Props = {
   drawing: LunchDrawing;
@@ -49,7 +49,10 @@ function NoteCardInner({ drawing, index, featured, hires, num, attach }: Props) 
       </div>
       <span className="note-tape" aria-hidden />
       <div className="note-label">
-        <span className="note-label-left">{formatShortYear(drawing.date)}</span>
+        <span className="note-label-left">
+          <span className="nl-full">{formatShortYear(drawing.date)}</span>
+          <span className="nl-short">{formatShort(drawing.date)}</span>
+        </span>
         <span className="note-label-num">#{num.toLocaleString()}</span>
       </div>
     </div>

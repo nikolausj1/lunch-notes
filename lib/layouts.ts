@@ -78,12 +78,14 @@ export function gridTargets(
   wantedCols = 5
 ): { targets: NoteTarget[]; info: GridInfo } {
   const pad = Math.max(20, vp.w * 0.04);
-  const topSafe = 108;
+  // phones reserve a right gutter so notes never run under the time strip
+  const padR = vp.w < 640 ? pad + 34 : pad;
+  const topSafe = vp.w < 640 ? 150 : 108; // clear the stacked mobile chrome
   const gap = vp.w < 640 ? 14 : 24;
   // honor the size control, but never let cells get unusably small
-  const maxCols = Math.max(2, Math.floor((vp.w - pad * 2 + gap) / (72 + gap)));
+  const maxCols = Math.max(2, Math.floor((vp.w - pad - padR + gap) / (72 + gap)));
   const cols = Math.max(2, Math.min(wantedCols, maxCols));
-  const cell = (vp.w - pad * 2 - gap * (cols - 1)) / cols;
+  const cell = (vp.w - pad - padR - gap * (cols - 1)) / cols;
 
   const base = baseNoteSize(vp);
   const n = drawings.length;

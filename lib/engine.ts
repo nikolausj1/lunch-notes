@@ -96,9 +96,12 @@ export class NotesEngine {
   private last = 0;
   private running = false;
   private root: HTMLElement | null = null;
+  private layer: HTMLElement | null = null;
+  private wLayerT = "";
 
   setRoot(el: HTMLElement | null) {
     this.root = el;
+    this.layer = el?.querySelector(".notes-layer") ?? null;
     this.root?.style.setProperty("--note-size", `${this.noteSize}px`);
   }
 
@@ -652,8 +655,11 @@ export class NotesEngine {
       : mode === "grid" ? this.scroll
       : mode === "scatter" && this.settled ? this.scatterScroll
       : null;
-    const cullTop = cullScroll != null ? cullScroll - this.vp.h : 0;
-    const cullBot = cullScroll != null ? cullScroll + this.vp.h * 2 : 0;
+    // narrower cull margin on phones: fewer live notes = less memory and
+    // fewer composited layers
+    const cullMargin = this.vp.h * (this.vp.w < 640 ? 0.5 : 1);
+    const cullTop = cullScroll != null ? cullScroll - cullMargin : 0;
+    const cullBot = cullScroll != null ? cullScroll + this.vp.h + cullMargin : 0;
 
     for (let i = 0; i < this.notes.length; i++) {
       const n = this.notes[i];
@@ -898,6 +904,15 @@ export class NotesEngine {
       : this.mode === "wall" ? this.wallScroll
       : 0;
 
+    // scrolling moves the whole layer as ONE composited transform; note
+    // elements keep content-space positions and only rewrite when they
+    // actually move. (Per-note scroll writes made mobile scrolling crawl.)
+    const layerT = scrollOff > 0.01 ? `translate3d(0px,${-scrollOff.toFixed(2)}px,0px)` : "";
+    if (this.layer && layerT !== this.wLayerT) {
+      this.layer.style.transform = layerT;
+      this.wLayerT = layerT;
+    }
+
     // anchor the inspect metadata beside the held (scatter) or zoomed (grid) note
     const inspectI =
       this.mode === "scatter" && this.dragIndex != null
@@ -932,7 +947,7 @@ export class NotesEngine {
       }
       if (invisible) continue;
       let x = n.x - half;
-      let y = n.y - half - scrollOff;
+      let y = n.y - half; // content space: the layer transform applies scroll
       let r = n.r;
       if (this.mode === "stack") {
         const top = this.stackTopIndex;
