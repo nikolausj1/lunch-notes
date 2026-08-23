@@ -24,7 +24,8 @@ type Tick = {
   num: number; // archive # of the month's first drawing
   jan: boolean;
   year: string;
-  noteIndex: number; // a note in this month (its y anchors the tick)
+  noteIndex: number; // a note in this month (its y anchors jumps + ink)
+  idx: number; // chronological month index, 0 = oldest
 };
 
 /**
@@ -64,6 +65,7 @@ export const TimeStrip = forwardRef<
           jan: key.endsWith("-01"),
           year: d.date.slice(0, 4),
           noteIndex: i, // drawings are oldest->newest; overwritten below
+          idx: seen.size,
         });
       } else {
         t.num = Math.min(t.num, num);
@@ -73,11 +75,11 @@ export const TimeStrip = forwardRef<
     return [...seen.values()];
   }, [drawings, numById]);
 
-  const fracOf = (t: Tick) => {
-    const g = geom.current;
-    if (!g || !g.contentH) return 0;
-    return Math.max(0, Math.min(1, (g.ys[t.noteIndex] ?? 0) / g.contentH));
-  };
+  // months are EVENLY spaced along the rail (a calendar axis, newest at
+  // the top to match the grid) — not proportional to how much grid each
+  // month occupies
+  const fracOf = (t: Tick) =>
+    ticks.length < 2 ? 0 : (ticks.length - 1 - t.idx) / (ticks.length - 1);
 
   const applyInk = () => {
     const rail = railRef.current;
@@ -148,19 +150,23 @@ export const TimeStrip = forwardRef<
       const k = Math.exp(-(d / 64) * (d / 64));
       el.style.transform = `translateY(-50%) scaleX(${1 + k * 1.8}) scaleY(${1 + k * 1.3})`;
     });
-    // readout: nearest tick by rail position
-    let best: Tick | null = null;
-    let bestD = Infinity;
-    for (const t of ticks) {
-      const d = Math.abs(fracOf(t) - f);
-      if (d < bestD) { bestD = d; best = t; }
-    }
+    // readout + jump target: the rail is a uniform calendar axis, so the
+    // cursor maps to a month index directly; jumps interpolate between the
+    // adjacent months' grid anchors
+    const p = (1 - f) * (ticks.length - 1);
+    const best = ticks[Math.round(p)];
     if (tip && best) {
       tip.style.top = f * 100 + "%";
       tip.innerHTML = `<b>${best.label}</b> · #${best.num.toLocaleString()}`;
       tip.dataset.on = "true";
     }
-    if (doJump) onJump(f * g.contentH - 120);
+    if (doJump) {
+      const a = ticks[Math.floor(p)];
+      const b = ticks[Math.ceil(p)];
+      const ya = g.ys[a.noteIndex] ?? 0;
+      const yb = g.ys[b.noteIndex] ?? 0;
+      onJump(ya + (yb - ya) * (p - Math.floor(p)) - 120);
+    }
   };
   const leave = () => {
     const rail = railRef.current;
