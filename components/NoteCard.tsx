@@ -49,10 +49,7 @@ function NoteCardInner({ drawing, index, featured, hires, num, attach }: Props) 
       </div>
       <span className="note-tape" aria-hidden />
       <div className="note-label">
-        <span className="note-label-left">
-          {formatShortYear(drawing.date)}
-          {drawing.child && <span className={`child-dot child-${drawing.child.toLowerCase()}`} />}
-        </span>
+        <span className="note-label-left">{formatShortYear(drawing.date)}</span>
         <span className="note-label-num">#{num.toLocaleString()}</span>
       </div>
     </div>
