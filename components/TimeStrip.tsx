@@ -113,7 +113,7 @@ export const TimeStrip = forwardRef<
     const center = (fa + fb) / 2;
     const half = Math.max(Math.abs(fb - fa) / 2, 0.05);
     rail.querySelectorAll<HTMLElement>("[data-tick]").forEach((el) => {
-      const f = parseFloat(el.style.top) / 100;
+      const f = Number(el.dataset.frac || 0);
       const d = (f - center) / half;
       if (Math.abs(d) <= 1.25) {
         // cosine falloff: longest at center, tapering at the ends
@@ -129,6 +129,17 @@ export const TimeStrip = forwardRef<
     });
   };
 
+  /** pixel-snapped top for a rail fraction: half-pixel grid keeps every
+   *  1.5px line rendering identically instead of alternating sharp/blurry */
+  const setSnappedTop = (el: HTMLElement, frac: number, center = true) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const h = rail.clientHeight || 1;
+    const y = frac * h - (center ? 0.75 : 0);
+    el.style.top = Math.round(y * 2) / 2 + "px";
+    el.dataset.frac = String(frac);
+  };
+
   const reposition = () => {
     const rail = railRef.current;
     if (!rail) return;
@@ -137,7 +148,7 @@ export const TimeStrip = forwardRef<
       if (k < ticks.length) {
         const t = ticks[k];
         el.dataset.y = String(g ? g.ys[t.noteIndex] ?? 0 : 0);
-        el.style.top = fracOf(t) * 100 + "%";
+        setSnappedTop(el, fracOf(t));
       } else {
         // minor tick: midway between adjacent months (double density)
         const a = ticks[k - ticks.length];
@@ -146,23 +157,29 @@ export const TimeStrip = forwardRef<
         const ya = g ? g.ys[a.noteIndex] ?? 0 : 0;
         const yb = g ? g.ys[b.noteIndex] ?? 0 : 0;
         el.dataset.y = String((ya + yb) / 2);
-        el.style.top = ((fracOf(a) + fracOf(b)) / 2) * 100 + "%";
+        setSnappedTop(el, (fracOf(a) + fracOf(b)) / 2);
       }
     });
     const jans = ticks.filter((t) => t.jan);
     rail.querySelectorAll<HTMLElement>(".ts-year").forEach((el, k) => {
-      if (jans[k]) el.style.top = fracOf(jans[k]) * 100 + "%";
+      if (jans[k]) setSnappedTop(el, fracOf(jans[k]), false);
     });
     applyInk();
   };
 
-  // grid layout can land before the strip mounts (mode-change ordering)
+  // grid layout can land before the strip mounts (mode-change ordering);
+  // re-snap tick positions whenever the rail resizes
   useEffect(() => {
     const l = getLayout();
     if (l) {
       geom.current = l;
       reposition();
     }
+    const rail = railRef.current;
+    if (!rail) return;
+    const ro = new ResizeObserver(() => reposition());
+    ro.observe(rail);
+    return () => ro.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticks, getLayout]);
 
@@ -192,9 +209,9 @@ export const TimeStrip = forwardRef<
     const f = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
     // magnify ticks near the cursor
     rail.querySelectorAll<HTMLElement>("[data-tick]").forEach((el) => {
-      const d = Math.abs((parseFloat(el.style.top) / 100) * r.height - f * r.height);
+      const d = Math.abs(Number(el.dataset.frac || 0) * r.height - f * r.height);
       const k = Math.exp(-(d / 64) * (d / 64));
-      el.style.transform = `translateY(-50%) scaleX(${1 + k * 1.8}) scaleY(${1 + k * 1.3})`;
+      el.style.transform = k > 0.03 ? `scaleX(${1 + k * 1.8}) scaleY(${1 + k * 1.3})` : "";
     });
     // readout + jump target: the rail is a uniform calendar axis, so the
     // cursor maps to a month index directly; jumps interpolate between the
@@ -218,7 +235,7 @@ export const TimeStrip = forwardRef<
     const rail = railRef.current;
     if (rail)
       rail.querySelectorAll<HTMLElement>("[data-tick]").forEach((el) => {
-        el.style.transform = "translateY(-50%)";
+        el.style.transform = "";
       });
     if (tipRef.current) tipRef.current.dataset.on = "false";
   };
