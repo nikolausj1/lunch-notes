@@ -126,7 +126,8 @@ body {
   left: 0;
   width: var(--note-size);
   height: var(--note-size);
-  will-change: transform;
+  /* no will-change: a compositor layer per note (x2,000) is what crashed
+     iOS Safari; translate3d promotes the ~200 visible ones on its own */
   cursor: grab;
 }
 
@@ -539,8 +540,9 @@ body {
 
 .size-control {
   position: fixed;
-  top: 16px;
-  right: 22px;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 100000;
   display: flex;
   align-items: center;
@@ -587,7 +589,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .size-control { top: 128px; right: 12px; }
+  .size-control { top: 108px; }
 }
 
 /* --------------------------------------- scatter hold-to-inspect label */

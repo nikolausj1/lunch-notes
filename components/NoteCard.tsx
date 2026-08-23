@@ -9,10 +9,12 @@ type Props = {
   index: number;
   /** load the full-resolution image (stack top, timeline focus) */
   featured: boolean;
+  /** cells render large (big grid): use the display image as the base */
+  hires?: boolean;
   attach: (i: number, el: HTMLDivElement | null) => void;
 };
 
-function NoteCardInner({ drawing, index, featured, attach }: Props) {
+function NoteCardInner({ drawing, index, featured, hires, attach }: Props) {
   return (
     <div
       className="note"
@@ -26,10 +28,11 @@ function NoteCardInner({ drawing, index, featured, attach }: Props) {
       >
         <img
           className="note-img"
-          src={drawing.thumbSrc}
+          src={hires ? drawing.imageSrc : drawing.thumbSrc}
           alt={drawing.title ?? "Lunch drawing"}
           draggable={false}
           loading="lazy"
+          decoding="async"
         />
         {featured && (
           <img
@@ -53,5 +56,6 @@ function NoteCardInner({ drawing, index, featured, attach }: Props) {
 
 export const NoteCard = memo(
   NoteCardInner,
-  (a, b) => a.drawing.id === b.drawing.id && a.featured === b.featured
+  (a, b) =>
+    a.drawing.id === b.drawing.id && a.featured === b.featured && a.hires === b.hires
 );

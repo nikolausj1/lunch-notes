@@ -188,7 +188,7 @@ export class NotesEngine {
     if (mode === "wall") {
       this.wallDrift = 0;
       this.wallOpen = false;
-      this.wallZoom = this.drawings.length - 1; // until the hand takes over
+      this.wallZoom = null; // nothing in focus until the cursor points at a note
       this.wallPrevX = [];
       this.wallScroll = this.wallScrollTarget = 0;
     }
@@ -233,7 +233,6 @@ export class NotesEngine {
       targets = wl.targets;
       this.wallH = wl.info.height;
       this.wallScrollTarget = Math.min(this.wallScrollTarget, this.maxWallScroll);
-      if (this.wallZoom == null) this.wallZoom = this.drawings.length - 1;
       this.updateFocus(this.wallZoom); // per-frame follow logic lives in tick
     } else {
       const tl = timelineTargets(this.drawings, this.vp, this.t);
@@ -362,7 +361,7 @@ export class NotesEngine {
       this.wallOpen = false;
       return;
     }
-    if (i != null) this.wallOpen = true;
+    if (i != null && this.wallZoom != null) this.wallOpen = true;
   }
 
   /** wall: arrow keys step through the moments while one is pinned open */
@@ -450,8 +449,8 @@ export class NotesEngine {
   pointerLeft() {
     this.pointer.x = this.pointer.px = -9999;
     this.pointer.y = this.pointer.py = -9999;
-    // wall: the featured moment glides back to center and keeps its label
-    this.setHover(this.mode === "wall" ? this.wallZoom : null);
+    // wall: a pinned moment keeps its label; an unpinned focus releases
+    this.setHover(this.mode === "wall" && this.wallOpen ? this.wallZoom : null);
   }
 
   // -------------------------------------------------------------- loop
@@ -554,31 +553,39 @@ export class NotesEngine {
         note.z = tt.z;
       });
 
-      // the gap (and the featured moment) live at the hand — or rest at
-      // center when no pointer has arrived yet / the mouse has left.
+      // the gap and the featured moment exist only while the cursor is on
+      // the wall: no pointer -> no focus, no parting (Justin's spec).
       // Note targets are in wall (content) space, so the pointer converts
       // by the current scroll.
       const size0 = this.noteSize;
       const pt = this.pointer;
-      const fx = pt.x < -9000 ? this.vp.w / 2 : pt.x;
-      const fy =
-        (pt.y < -9000 ? this.vp.h / 2 : pt.y) + this.wallScroll;
+      const hasPointer = pt.x > -9000;
+      const fx = hasPointer ? pt.x : -1e6;
+      const fy = hasPointer ? pt.y + this.wallScroll : -1e6;
       this.wallPoint.x = fx;
       this.wallPoint.y = fy;
 
-      // focus follows the pointer (source: nearest cell within 0.9× the
-      // gap radius becomes the featured photo, never while pinned open)
+      // focus follows the pointer: the nearest note within reach takes it,
+      // and it releases when the cursor leaves the wall (never while pinned)
       if (!this.wallOpen) {
         let best = -1;
         let bestD = Infinity;
-        for (let i = 0; i < wl.targets.length; i++) {
-          const d = Math.hypot(wl.targets[i].x - fx, wl.targets[i].y - fy);
-          if (d < bestD) { bestD = d; best = i; }
+        if (hasPointer) {
+          for (let i = 0; i < wl.targets.length; i++) {
+            const d = Math.hypot(wl.targets[i].x - fx, wl.targets[i].y - fy);
+            if (d < bestD) { bestD = d; best = i; }
+          }
         }
-        if (best >= 0 && best !== this.wallZoom && bestD < size0 * 2.0) {
-          this.wallZoom = best;
-          this.updateFocus(best);
-          this.setHover(best);
+        if (best >= 0 && bestD < size0 * 2.0) {
+          if (best !== this.wallZoom) {
+            this.wallZoom = best;
+            this.updateFocus(best);
+            this.setHover(best);
+          }
+        } else if (this.wallZoom != null) {
+          this.wallZoom = null;
+          this.updateFocus(null);
+          this.setHover(null);
         }
       }
 
@@ -896,9 +903,11 @@ export class NotesEngine {
       const n = this.notes[i];
       const el = n.el;
       if (!el) continue;
+      // display:none (not visibility) so offscreen notes hold no compositor
+      // layer and their lazy images never fetch — critical on iOS Safari
       const invisible = n.hidden || n.culled;
       if (invisible !== n.wHidden) {
-        el.style.visibility = invisible ? "hidden" : "visible";
+        el.style.display = invisible ? "none" : "";
         n.wHidden = invisible;
       }
       if (invisible) continue;

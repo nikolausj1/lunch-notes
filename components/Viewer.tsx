@@ -221,8 +221,12 @@ export function Viewer() {
     if (mode === "wall" && focus != null && drawings[focus]) {
       s.add(drawings[focus].id);
     }
+    // a note held up close (scatter hold, wall follow) sharpens too
+    if (held != null && drawings[held]) {
+      s.add(drawings[held].id);
+    }
     return s;
-  }, [mode, focus, drawings]);
+  }, [mode, focus, held, drawings]);
 
   const touchDrag = useRef<{ lastY: number; pointerId: number } | null>(null);
   const press = useRef<{ x: number; y: number; t: number; idx: number | null } | null>(null);
@@ -303,6 +307,7 @@ export function Viewer() {
             drawing={d}
             index={i}
             featured={featured.has(d.id)}
+            hires={mode === "grid" && gridCols <= 5}
             attach={attach}
           />
         ))}
