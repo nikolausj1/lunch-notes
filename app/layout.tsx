@@ -31,7 +31,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // charcoal desk is the default — the picker's effect lifts the attribute
+    // when a saved light color is restored
+    <html lang="en" data-desk-dark="true">
       <body className={`${nunito.variable} ${caveat.variable}`}>{children}</body>
     </html>
   );

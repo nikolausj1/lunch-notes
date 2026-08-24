@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const DEFAULT_DESK = "#ece5d6";
+const DEFAULT_DESK = "#4c4841";
 const STORAGE_KEY = "lbd-desk-color";
 
 /** six alternatives with more contrast against the pale post-its */

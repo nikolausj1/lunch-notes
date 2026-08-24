@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --desk: #ece5d6;
+  --desk: #4c4841; /* charcoal default; the picker can change it */
   --desk-light: #f6f1e6;
   --ink: #3f3a31;
   --ink-soft: #7d7565;
@@ -1009,6 +1009,11 @@ html[data-desk-dark] .scatter-tip .meta-tag {
   background: rgba(251, 248, 238, 0.16);
   color: #d6cfc0;
 }
+
+/* loading screen text sits on the desk color too */
+html[data-desk-dark] .loading-story { color: #efe9db; }
+html[data-desk-dark] .loading p { color: #cfc7b4; }
+html[data-desk-dark] .loading-count { color: #cfc7b4; }
 
 /* the cream top-glow reads wrong on a dark desk — dim the lighting */
 html[data-desk-dark] .desk {
