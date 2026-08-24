@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getDrawings, tagCounts } from "@/lib/drawings";
 import { ViewMode } from "@/lib/types";
 import { NotesEngine } from "@/lib/engine";
-import { monthKey, formatMonth } from "@/lib/dates";
+import { monthKey, formatMonth, formatShortYear } from "@/lib/dates";
 import { NoteCard } from "./NoteCard";
 import { ModeSelector } from "./ModeSelector";
 import { DeskSurface } from "./DeskSurface";
@@ -46,6 +46,8 @@ export function Viewer() {
   const [gridCols, setGridCols] = useState(5); // M is the default note size
   const [focus, setFocus] = useState<number | null>(null);
   const [held, setHeld] = useState<number | null>(null);
+  // grid click-to-zoom: index + on-screen size of the open note (drives the caption pill)
+  const [gridZoom, setGridZoomState] = useState<{ idx: number; size: number } | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const engineRef = useRef<NotesEngine | null>(null);
@@ -107,6 +109,8 @@ export function Viewer() {
       onGridScroll: (scroll, viewH, contentH) => {
         stripRef.current?.sync(scroll, viewH, contentH);
       },
+      onGridZoom: (i, sizePx) =>
+        setGridZoomState(i == null ? null : { idx: i, size: sizePx }),
     });
     engineRef.current = eng;
     if (process.env.NODE_ENV === "development") {
@@ -421,6 +425,20 @@ export function Viewer() {
           </button>
         )}
       </div>
+
+      {mode === "grid" && gridZoom && drawings[gridZoom.idx] && (
+        <div
+          className="zoom-pill"
+          key={drawings[gridZoom.idx].id}
+          style={{ top: `calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)` }}
+        >
+          {formatShortYear(drawings[gridZoom.idx].date)}
+          <span className="zp-sep">·</span>
+          <span className="zp-num">
+            #{numById.get(drawings[gridZoom.idx].id)?.toLocaleString()}
+          </span>
+        </div>
+      )}
 
       <MetadataPanel
         drawing={focus != null ? drawings[focus] ?? null : null}

@@ -46,6 +46,8 @@ export type EngineCallbacks = {
   onGridLayout?: (ys: number[], contentHeight: number) => void;
   /** grid scroll frame update (drives the time strip) */
   onGridScroll?: (scroll: number, viewH: number, contentHeight: number) => void;
+  /** grid click-to-zoom: zoomed note index + its on-screen size, null when put back */
+  onGridZoom?: (index: number | null, sizePx: number) => void;
 };
 
 const PEEL_DIST = 280; // wheel px to fully peel one note
@@ -187,6 +189,7 @@ export class NotesEngine {
       n.el.style.setProperty("--blur", "0");
       n.el.style.setProperty("--fb", "0");
       n.el.style.opacity = "";
+      if (n.el.dataset.zoomed) delete n.el.dataset.zoomed;
       n.blurT = 0; n.opT = 1; n.fb = 0; n.fbv = 0;
       n.wBlur = -1; n.wOp = -1; n.wFb = Infinity;
     });
@@ -242,7 +245,9 @@ export class NotesEngine {
       // click-to-zoom: the zoomed note floats front and center
       if (this.gridZoom != null && targets[this.gridZoom]) {
         const base = this.noteSize;
-        const big = Math.min((this.vp.h * 0.74) / base, (this.vp.w * 0.62) / base);
+        // phones: the open note should nearly fill the width
+        const wFrac = this.vp.w < 640 ? 0.9 : 0.62;
+        const big = Math.min((this.vp.h * 0.74) / base, (this.vp.w * wFrac) / base);
         targets[this.gridZoom] = {
           x: this.vp.w / 2,
           y: this.vp.h / 2 + this.scroll,
@@ -250,7 +255,16 @@ export class NotesEngine {
           s: big,
           z: 9000,
         };
+        this.cb.onGridZoom?.(this.gridZoom, big * base);
+      } else {
+        this.cb.onGridZoom?.(null, 0);
       }
+      // data-zoomed lets CSS hide the scaled-up label and deepen the shadow
+      this.notes.forEach((n, idx) => {
+        if (!n.el) return;
+        if (idx === this.gridZoom) n.el.dataset.zoomed = "true";
+        else if (n.el.dataset.zoomed) delete n.el.dataset.zoomed;
+      });
     } else if (mode === "stack") {
       targets = stackTargets(this.drawings, this.vp, this.peeled);
       this.updateFocus(this.stackTopIndex);

@@ -473,6 +473,65 @@ body {
   margin-top: calc(6px / var(--grid-scale, 1));
 }
 
+/* ------------------------------------------- grid detail (click-to-zoom) */
+
+/* the open note drops its label (the caption pill takes over) and floats
+   on a deep shadow; values are small because they scale with the note */
+.viewer[data-mode="grid"] .note[data-zoomed="true"] .note-label {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.viewer[data-mode="grid"] .note[data-zoomed="true"] .note-paper {
+  box-shadow:
+    0 0.5px 1px rgba(60, 48, 28, 0.28),
+    0 5px 10px rgba(60, 48, 28, 0.3),
+    0 13px 24px rgba(60, 48, 28, 0.32);
+}
+
+/* frosted caption pill under the open note */
+.zoom-pill {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99000;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(251, 248, 238, 0.62);
+  -webkit-backdrop-filter: blur(9px) saturate(1.1);
+  backdrop-filter: blur(9px) saturate(1.1);
+  padding: 8px 18px;
+  border-radius: 999px;
+  box-shadow:
+    0 1px 2px rgba(80, 65, 40, 0.14),
+    0 5px 14px rgba(80, 65, 40, 0.14);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: pill-in 0.3s ease 0.14s backwards;
+}
+
+@keyframes pill-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(7px);
+  }
+}
+
+.zp-sep {
+  color: rgba(125, 117, 101, 0.6);
+  font-weight: 400;
+}
+
+.zp-num {
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
 .child-dot {
   width: 7px;
   height: 7px;
