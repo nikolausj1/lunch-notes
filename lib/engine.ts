@@ -48,6 +48,8 @@ export type EngineCallbacks = {
   onGridScroll?: (scroll: number, viewH: number, contentHeight: number) => void;
   /** grid click-to-zoom: zoomed note index + its on-screen size, null when put back */
   onGridZoom?: (index: number | null, sizePx: number) => void;
+  /** wall: a moment was pinned open (index + on-screen size) or handed back (null) */
+  onWallOpen?: (index: number | null, sizePx: number) => void;
 };
 
 const PEEL_DIST = 280; // wheel px to fully peel one note
@@ -79,6 +81,9 @@ export class NotesEngine {
   // clicking pins it open at center and pauses the row drift
   wallZoom: number | null = null;
   wallOpen = false;
+  // last onWallOpen notification, so the per-frame wall tick only fires on change
+  private wallNotifiedIdx: number | null = null;
+  private wallNotifiedSize = 0;
   wallDrift = 0;
   wallFocusHalf = 0;
   wallPoint = { x: 0, y: 0 }; // content space (y includes wall scroll)
@@ -674,6 +679,18 @@ export class NotesEngine {
           nz.ts = Math.min(2.3, big * 0.72);
         }
         nz.z = 9000;
+      }
+
+      // caption pill: tell the UI when a moment is pinned open (or closed)
+      const openIdx = this.wallOpen && zi != null ? zi : null;
+      const openSize = openIdx != null ? this.wallFocusHalf * 2 : 0;
+      if (
+        openIdx !== this.wallNotifiedIdx ||
+        Math.abs(openSize - this.wallNotifiedSize) > 1
+      ) {
+        this.wallNotifiedIdx = openIdx;
+        this.wallNotifiedSize = openSize;
+        this.cb.onWallOpen?.(openIdx, openSize);
       }
     }
 

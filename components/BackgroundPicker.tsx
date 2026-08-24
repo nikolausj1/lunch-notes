@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { syncThemeColor } from "@/lib/theme";
 
-const DEFAULT_DESK = "#4c4841";
+const DEFAULT_DESK = "#e6e6e6";
 const STORAGE_KEY = "lbd-desk-color";
 
 /** six alternatives with more contrast against the pale post-its */
@@ -36,6 +37,7 @@ function applyDesk(color: string) {
   root.style.setProperty("--desk", color);
   if (luminance(color) < 0.45) root.dataset.deskDark = "true";
   else delete root.dataset.deskDark;
+  syncThemeColor();
 }
 
 export function BackgroundPicker() {

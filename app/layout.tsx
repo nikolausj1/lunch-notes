@@ -23,6 +23,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
+  // Safari tints its chrome with this; lib/theme.ts keeps it current
+  themeColor: "#fbf8ee",
 };
 
 export default function RootLayout({
@@ -31,9 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // charcoal desk is the default — the picker's effect lifts the attribute
-    // when a saved light color is restored
-    <html lang="en" data-desk-dark="true">
+    <html lang="en">
       <body className={`${nunito.variable} ${caveat.variable}`}>{children}</body>
     </html>
   );

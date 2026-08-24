@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getDrawings, tagCounts } from "@/lib/drawings";
-import { ViewMode } from "@/lib/types";
+import { getDrawings } from "@/lib/drawings";
+import { syncThemeColor } from "@/lib/theme";
+import { LunchDrawing, ViewMode } from "@/lib/types";
 import { NotesEngine } from "@/lib/engine";
 import { monthKey, formatMonth, formatShortYear } from "@/lib/dates";
 import { ageGradeLabel } from "@/lib/kids";
@@ -16,6 +17,41 @@ import { TimeStrip, TimeStripHandle } from "./TimeStrip";
 
 const MIN_LOAD_MS = 1700; // long enough to read the story line, no longer
 
+/** frosted caption under an opened note (grid zoom, wall pinned moment) */
+function CaptionPill({
+  d,
+  num,
+  top,
+}: {
+  d: LunchDrawing;
+  num: number | undefined;
+  top: string;
+}) {
+  return (
+    <div className="zoom-pill" key={d.id} style={{ top }}>
+      {d.title && <div className="zp-title">{d.title}</div>}
+      <div className="zp-row">
+        {d.child && (
+          <span className={`meta-child child-bg-${d.child.toLowerCase()}`}>
+            {d.child}
+            {ageGradeLabel(d.child, d.date) && (
+              <span className="meta-age"> · {ageGradeLabel(d.child, d.date)}</span>
+            )}
+          </span>
+        )}
+        <span className="zp-date">
+          {formatShortYear(d.date)}
+          <span className="zp-sep">·</span>
+          <span className="zp-num">drawing #{num?.toLocaleString()}</span>
+        </span>
+        {d.tags?.map((t) => (
+          <span key={t} className="meta-tag">{t}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** ?count=N keeps a recent slice (testing); default is the whole archive */
 function getCount(): number | undefined {
   if (typeof window === "undefined") return undefined;
@@ -26,12 +62,7 @@ function getCount(): number | undefined {
 export function Viewer() {
   const [count] = useState(getCount);
   const all = useMemo(() => getDrawings(count), [count]);
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const tags = useMemo(() => tagCounts(all), [all]);
-  const drawings = useMemo(
-    () => all.filter((d) => !tagFilter || (d.tags ?? []).includes(tagFilter)),
-    [all, tagFilter]
-  );
+  const drawings = all;
   // running number in the whole archive (oldest = #1), stable under filters
   const numById = useMemo(() => {
     const m = new Map<string, number>();
@@ -44,6 +75,14 @@ export function Viewer() {
   const [held, setHeld] = useState<number | null>(null);
   // grid click-to-zoom: index + on-screen size of the open note (drives the caption pill)
   const [gridZoom, setGridZoomState] = useState<{ idx: number; size: number } | null>(null);
+  // wall: the pinned-open moment gets the same caption pill
+  const [wallOpen, setWallOpenState] = useState<{ idx: number; size: number } | null>(null);
+  // mobile: the paper header rides with the grid scroll and pushes off the top
+  const headerRef = useRef<{ el: HTMLElement | null; h: number; off: boolean }>({
+    el: null,
+    h: 0,
+    off: false,
+  });
   const [loaded, setLoaded] = useState(false);
 
   const engineRef = useRef<NotesEngine | null>(null);
@@ -104,9 +143,30 @@ export function Viewer() {
       },
       onGridScroll: (scroll, viewH, contentH) => {
         stripRef.current?.sync(scroll, viewH, contentH);
+        // phones: the content pushes the paper header off the top edge and
+        // brings it back when scrolled home; Safari's chrome follows suit
+        if (window.innerWidth < 640) {
+          const hr = headerRef.current;
+          if (!hr.el) {
+            hr.el = document.querySelector<HTMLElement>(".title-slip");
+            hr.h = hr.el?.offsetHeight ?? 0;
+          }
+          if (hr.el) {
+            const off = Math.min(scroll, hr.h + 4);
+            hr.el.style.transform = `translateY(${(-off).toFixed(1)}px)`;
+            const hidden = off >= hr.h * 0.6;
+            if (hidden !== hr.off) {
+              hr.off = hidden;
+              document.documentElement.dataset.headerOff = hidden ? "1" : "0";
+              syncThemeColor();
+            }
+          }
+        }
       },
       onGridZoom: (i, sizePx) =>
         setGridZoomState(i == null ? null : { idx: i, size: sizePx }),
+      onWallOpen: (i, sizePx) =>
+        setWallOpenState(i == null ? null : { idx: i, size: sizePx }),
     });
     engineRef.current = eng;
     if (process.env.NODE_ENV === "development") {
@@ -219,13 +279,25 @@ export function Viewer() {
   const changeMode = (m: ViewMode) => {
     setMode(m);
     setHeld(null);
+    setWallOpenState(null);
     engineRef.current?.setMode(m);
+    // leaving grid resets its scroll — the mobile header comes home with it
+    const hr = headerRef.current;
+    if (hr.el) hr.el.style.transform = "";
+    hr.off = false;
+    document.documentElement.dataset.headerOff = "0";
+    syncThemeColor();
   };
 
   const changeGridCols = (cols: number) => {
     setGridCols(cols);
     engineRef.current?.setGridCols(cols);
   };
+
+  // first paint: put Safari's chrome in step with the header/desk
+  useEffect(() => {
+    syncThemeColor();
+  }, []);
 
   // full-res images near the focused note in stack/timeline
   const featured = useMemo(() => {
@@ -263,7 +335,7 @@ export function Viewer() {
         const eng = engineRef.current;
         if (!eng) return;
         // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar, .time-strip, .title-slip, .story-backdrop, .bg-picker")) return;
+        if ((e.target as HTMLElement).closest("button, .nav-stack, .time-strip, .title-slip, .story-backdrop, .bg-picker")) return;
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -386,65 +458,21 @@ export function Viewer() {
         />
       )}
 
-      <div className="filter-bar" role="group" aria-label="Filter drawings">
-        <select
-          className="filter-select"
-          value={tagFilter ?? ""}
-          onChange={(e) => setTagFilter(e.target.value || null)}
-          aria-label="Filter by subject"
-        >
-          <option value="">every subject</option>
-          {tags.map(([t, n]) => (
-            <option key={t} value={t}>
-              {t} ({n})
-            </option>
-          ))}
-        </select>
-        {tagFilter && (
-          <button
-            className="filter-btn filter-clear"
-            onClick={() => setTagFilter(null)}
-          >
-            {drawings.length.toLocaleString()} shown · clear ×
-          </button>
-        )}
-      </div>
+      {mode === "grid" && gridZoom && drawings[gridZoom.idx] && (
+        <CaptionPill
+          d={drawings[gridZoom.idx]}
+          num={numById.get(drawings[gridZoom.idx].id)}
+          top={`calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)`}
+        />
+      )}
 
-      {mode === "grid" &&
-        gridZoom &&
-        drawings[gridZoom.idx] &&
-        (() => {
-          const d = drawings[gridZoom.idx];
-          return (
-            <div
-              className="zoom-pill"
-              key={d.id}
-              style={{ top: `calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)` }}
-            >
-              {d.title && <div className="zp-title">{d.title}</div>}
-              <div className="zp-row">
-                {d.child && (
-                  <span className={`meta-child child-bg-${d.child.toLowerCase()}`}>
-                    {d.child}
-                    {ageGradeLabel(d.child, d.date) && (
-                      <span className="meta-age"> · {ageGradeLabel(d.child, d.date)}</span>
-                    )}
-                  </span>
-                )}
-                <span className="zp-date">
-                  {formatShortYear(d.date)}
-                  <span className="zp-sep">·</span>
-                  <span className="zp-num">
-                    drawing #{numById.get(d.id)?.toLocaleString()}
-                  </span>
-                </span>
-                {d.tags?.map((t) => (
-                  <span key={t} className="meta-tag">{t}</span>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
+      {mode === "wall" && wallOpen && drawings[wallOpen.idx] && (
+        <CaptionPill
+          d={drawings[wallOpen.idx]}
+          num={numById.get(drawings[wallOpen.idx].id)}
+          top={`calc(45% + ${Math.round(wallOpen.size / 2) + 18}px)`}
+        />
+      )}
 
       <BackgroundPicker />
 
