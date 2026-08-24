@@ -1,22 +1,17 @@
 /**
- * The origin story. Interim wording — Justin is choosing the final text.
- * Facts to honor: don't name what the first drawing was; drawings don't
- * always come home (gifted, lost, returned) — each is photographed before
- * it leaves for school.
+ * The origin story, in Justin's words (final, chosen 2026-08-24).
+ * The same text appears in the loading beat, the title-slip story sheet,
+ * and the social share description (app/layout.tsx).
  */
 
-/** One line shown during the loading beat, buried by the arriving notes. */
-export const STORY_LINE =
+const ORIGIN =
   "On my first son's first day of preschool, I put a small drawing in his " +
-  "lunchbox — so he'd have a smile for lunch.";
+  "lunchbox so he would have a smile for lunch. Over 2,000 drawings later, " +
+  "they've become little paper time capsules: everything my sons loved, " +
+  "one school lunch at a time, since 2019.";
 
-/** The full paragraph behind the title slip. */
-export const STORY_TEXT =
-  "When Chase headed off to his first day of preschool, I put a small " +
-  "drawing in his lunchbox so he would have a smile for lunch. The next " +
-  "day I drew another, and it became our thing: every school morning, a " +
-  "pen, a post-it, and whatever he was into that week. When his little " +
-  "brother Vinny started school, his lunches came with drawings too. Some " +
-  "drawings get given away, some get lost, some come home creased — so I " +
-  "take a picture of each one before it leaves for school. More than two " +
-  "thousand lunches later, this is where they all live.";
+/** Shown during the loading beat, buried by the arriving notes. */
+export const STORY_LINE = ORIGIN;
+
+/** The story behind the title slip. */
+export const STORY_TEXT = ORIGIN;

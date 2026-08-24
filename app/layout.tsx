@@ -14,8 +14,9 @@ const caveat = Caveat({
 
 const DESCRIPTION =
   "On my first son's first day of preschool, I put a small drawing in his " +
-  "lunchbox so he'd have a smile for lunch. More than two thousand " +
-  "school-day drawings later, they're all here.";
+  "lunchbox so he would have a smile for lunch. Over 2,000 drawings later, " +
+  "they've become little paper time capsules: everything my sons loved, " +
+  "one school lunch at a time, since 2019.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lunchboxdrawings.com"),
