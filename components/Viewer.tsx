@@ -11,6 +11,7 @@ import { ModeSelector } from "./ModeSelector";
 import { DeskSurface } from "./DeskSurface";
 import { MetadataPanel, HoldMetadata } from "./MetadataPanel";
 import { LoadingExperience } from "./LoadingExperience";
+import { BackgroundPicker } from "./BackgroundPicker";
 import { TimeStrip, TimeStripHandle } from "./TimeStrip";
 
 const MIN_LOAD_MS = 1700; // long enough to read the story line, no longer
@@ -25,17 +26,11 @@ function getCount(): number | undefined {
 export function Viewer() {
   const [count] = useState(getCount);
   const all = useMemo(() => getDrawings(count), [count]);
-  const [childFilter, setChildFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const tags = useMemo(() => tagCounts(all), [all]);
   const drawings = useMemo(
-    () =>
-      all.filter(
-        (d) =>
-          (!childFilter || d.child === childFilter) &&
-          (!tagFilter || (d.tags ?? []).includes(tagFilter))
-      ),
-    [all, childFilter, tagFilter]
+    () => all.filter((d) => !tagFilter || (d.tags ?? []).includes(tagFilter)),
+    [all, tagFilter]
   );
   // running number in the whole archive (oldest = #1), stable under filters
   const numById = useMemo(() => {
@@ -268,7 +263,7 @@ export function Viewer() {
         const eng = engineRef.current;
         if (!eng) return;
         // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar, .time-strip, .title-slip, .story-backdrop")) return;
+        if ((e.target as HTMLElement).closest("button, .nav-stack, .filter-bar, .time-strip, .title-slip, .story-backdrop, .bg-picker")) return;
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -392,16 +387,6 @@ export function Viewer() {
       )}
 
       <div className="filter-bar" role="group" aria-label="Filter drawings">
-        {(["Chase", "Vinny"] as const).map((c) => (
-          <button
-            key={c}
-            className="filter-btn filter-child"
-            data-active={childFilter === c}
-            onClick={() => setChildFilter(childFilter === c ? null : c)}
-          >
-            <span className={`child-dot child-${c.toLowerCase()}`} /> {c}
-          </button>
-        ))}
         <select
           className="filter-select"
           value={tagFilter ?? ""}
@@ -415,13 +400,10 @@ export function Viewer() {
             </option>
           ))}
         </select>
-        {(childFilter || tagFilter) && (
+        {tagFilter && (
           <button
             className="filter-btn filter-clear"
-            onClick={() => {
-              setChildFilter(null);
-              setTagFilter(null);
-            }}
+            onClick={() => setTagFilter(null)}
           >
             {drawings.length.toLocaleString()} shown · clear ×
           </button>
@@ -463,6 +445,8 @@ export function Viewer() {
             </div>
           );
         })()}
+
+      <BackgroundPicker />
 
       <MetadataPanel
         drawing={focus != null ? drawings[focus] ?? null : null}
