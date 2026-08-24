@@ -12,10 +12,27 @@ const caveat = Caveat({
   subsets: ["latin"],
 });
 
+const DESCRIPTION =
+  "On my first son's first day of preschool, I put a small astronaut drawing " +
+  "in his lunchbox so he'd have a smile for lunch. More than two thousand " +
+  "school-day drawings later, they're all here.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lunchboxdrawings.com"),
   title: "Lunch Box Drawings",
-  description:
-    "Daily Post-it drawings made for my sons' lunches — an interactive desk of little paper artifacts.",
+  description: DESCRIPTION,
+  openGraph: {
+    title: "Lunch Box Drawings",
+    description: DESCRIPTION,
+    url: "/",
+    siteName: "Lunch Box Drawings",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lunch Box Drawings",
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {

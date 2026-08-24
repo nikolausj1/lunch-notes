@@ -299,6 +299,53 @@ export function Viewer() {
     syncThemeColor();
   }, []);
 
+  // shareable links: the open drawing's number lives in the URL hash.
+  // Only clear a hash we wrote — the arrival hash must survive until the
+  // open-from-hash effect below has consumed it.
+  const syncedNum = useRef<number | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const d = gridZoom ? drawings[gridZoom.idx] : null;
+    const num = (d && numById.get(d.id)) || null;
+    if (num) {
+      history.replaceState(null, "", `#${num}`);
+      syncedNum.current = num;
+    } else if (syncedNum.current != null) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+      syncedNum.current = null;
+    }
+  }, [gridZoom, drawings, numById]);
+
+  // arriving with #1514 in the URL opens that drawing once the grid is up
+  const openedFromHash = useRef(false);
+  useEffect(() => {
+    if (!loaded || openedFromHash.current) return;
+    openedFromHash.current = true;
+    const m = /^#(\d{1,4})$/.exec(window.location.hash);
+    if (!m) return;
+    const idx = Number(m[1]) - 1;
+    let tries = 0;
+    const attempt = () => {
+      const eng = engineRef.current;
+      if (!eng || !drawings[idx] || mode !== "grid") return;
+      const ys = gridLayoutRef.current?.ys;
+      // the grid may not be measurable yet (throttled/hidden tab) — wait it out
+      if ((!ys || ys[idx] == null || eng.maxScroll <= 0) && tries++ < 8) {
+        setTimeout(attempt, 300);
+        return;
+      }
+      if (ys && ys[idx] != null) {
+        // jump (not glide) so the zoom target lands on the right scroll
+        eng.setGridScrollTarget(Math.max(0, ys[idx] - window.innerHeight * 0.45));
+        eng.scroll = eng.scrollTarget;
+      }
+      eng.onGridClick(idx);
+    };
+    const t = setTimeout(attempt, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
   // full-res images near the focused note in stack/timeline
   const featured = useMemo(() => {
     const s = new Set<string>();
