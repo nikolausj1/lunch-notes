@@ -547,9 +547,9 @@ body {
 .ts-tip b { color: #a06b22; }
 
 @media (max-width: 640px) {
-  .time-strip { width: 40px; right: 0; top: 176px; bottom: 96px; }
-  .ts-tick { right: 10px; }
-  .ts-year { display: none; }
+  .time-strip { width: 44px; right: 0; top: 176px; bottom: 96px; }
+  .ts-tick { right: 22px; }
+  .ts-year { font-size: 8px; letter-spacing: 0.02em; right: 0; }
 }
 
 /* --------------------------------------------------------- filter bar */
