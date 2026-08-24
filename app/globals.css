@@ -212,6 +212,17 @@ body {
   .title-slip:hover { transform: none; }
   .title-slip-tape { display: none; }
   .title-slip p { font-size: 9px; }
+
+  /* scrolling down tucks the chrome away; scrolling up brings it back */
+  .title-slip { transition: transform 0.28s ease; }
+  html[data-chrome="off"] .title-slip { transform: translateY(-110%); }
+  html[data-chrome="off"] .title-slip:hover { transform: translateY(-110%); }
+  .size-control { transition: opacity 0.22s ease, transform 0.28s ease; }
+  html[data-chrome="off"] .size-control {
+    opacity: 0;
+    transform: translateY(-52px);
+    pointer-events: none;
+  }
 }
 
 /* -------------------------------------------------------------- notes */
@@ -663,9 +674,16 @@ body {
 }
 
 /* phones: the title slip leads at the very top; the nav drops below it.
-   (This override must come AFTER the .nav-stack base rule to win.) */
+   When the chrome tucks away on scroll, the nav docks at the top edge.
+   (These overrides must come AFTER the .nav-stack base rule to win.) */
 @media (max-width: 640px) {
-  .nav-stack { top: 66px; }
+  .nav-stack {
+    top: 66px;
+    transition: top 0.28s ease;
+  }
+  html[data-chrome="off"] .nav-stack {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+  }
 }
 
 .mode-selector {
@@ -799,6 +817,14 @@ body {
     text-align: center;
   }
   .meta-panel-stack .meta-row { justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  /* phones: the torn-off pile owns the top — metadata sits under the pad
+     (pad center is 58% down, note is 2.6 × the 96px phone base note) */
+  .meta-panel-stack {
+    top: calc(58% + 140px);
+  }
   .meta-card { min-width: 160px; }
   .meta-title { font-size: 20px; }
 }

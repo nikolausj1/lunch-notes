@@ -77,12 +77,8 @@ export function Viewer() {
   const [gridZoom, setGridZoomState] = useState<{ idx: number; size: number } | null>(null);
   // wall: the pinned-open moment gets the same caption pill
   const [wallOpen, setWallOpenState] = useState<{ idx: number; size: number } | null>(null);
-  // mobile: the paper header rides with the grid scroll and pushes off the top
-  const headerRef = useRef<{ el: HTMLElement | null; h: number; off: boolean }>({
-    el: null,
-    h: 0,
-    off: false,
-  });
+  // mobile chrome (header + S/M/L): hides on scroll down, returns on scroll up
+  const chromeRef = useRef({ prev: 0, acc: 0, off: false });
   const [loaded, setLoaded] = useState(false);
 
   const engineRef = useRef<NotesEngine | null>(null);
@@ -143,23 +139,24 @@ export function Viewer() {
       },
       onGridScroll: (scroll, viewH, contentH) => {
         stripRef.current?.sync(scroll, viewH, contentH);
-        // phones: the content pushes the paper header off the top edge and
-        // brings it back when scrolled home; Safari's chrome follows suit
+        // phones: scrolling down slides the header + S/M/L away (the mode nav
+        // docks at the top); any scroll up brings them back. Safari's chrome
+        // tint follows the header.
         if (window.innerWidth < 640) {
-          const hr = headerRef.current;
-          if (!hr.el) {
-            hr.el = document.querySelector<HTMLElement>(".title-slip");
-            hr.h = hr.el?.offsetHeight ?? 0;
-          }
-          if (hr.el) {
-            const off = Math.min(scroll, hr.h + 4);
-            hr.el.style.transform = `translateY(${(-off).toFixed(1)}px)`;
-            const hidden = off >= hr.h * 0.6;
-            if (hidden !== hr.off) {
-              hr.off = hidden;
-              document.documentElement.dataset.headerOff = hidden ? "1" : "0";
-              syncThemeColor();
-            }
+          const cr = chromeRef.current;
+          const d = scroll - cr.prev;
+          cr.prev = scroll;
+          // accumulate one direction at a time so tiny jitter can't flicker it
+          if (d > 0) cr.acc = Math.max(0, cr.acc) + d;
+          else if (d < 0) cr.acc = Math.min(0, cr.acc) + d;
+          const hide = !cr.off && scroll > 70 && cr.acc > 14;
+          const show = cr.off && (cr.acc < -14 || scroll < 40);
+          if (hide || show) {
+            cr.off = hide;
+            const root = document.documentElement;
+            root.dataset.chrome = hide ? "off" : "on";
+            root.dataset.headerOff = hide ? "1" : "0";
+            syncThemeColor();
           }
         }
       },
@@ -281,11 +278,14 @@ export function Viewer() {
     setHeld(null);
     setWallOpenState(null);
     engineRef.current?.setMode(m);
-    // leaving grid resets its scroll — the mobile header comes home with it
-    const hr = headerRef.current;
-    if (hr.el) hr.el.style.transform = "";
-    hr.off = false;
-    document.documentElement.dataset.headerOff = "0";
+    // leaving grid resets its scroll — the mobile chrome comes home with it
+    const cr = chromeRef.current;
+    cr.off = false;
+    cr.prev = 0;
+    cr.acc = 0;
+    const root = document.documentElement;
+    root.dataset.chrome = "on";
+    root.dataset.headerOff = "0";
     syncThemeColor();
   };
 
@@ -480,10 +480,14 @@ export function Viewer() {
         drawing={focus != null ? drawings[focus] ?? null : null}
         mode={mode}
       />
-      {/* grid zoom puts everything in the caption pill instead */}
+      {/* grid zoom and a pinned wall moment use the caption pill instead */}
       <HoldMetadata
         ref={holdTipRef}
-        drawing={held != null && mode !== "grid" ? drawings[held] ?? null : null}
+        drawing={
+          held != null && mode !== "grid" && !(mode === "wall" && wallOpen)
+            ? drawings[held] ?? null
+            : null
+        }
       />
 
       {(mode === "stack" || mode === "timeline" || mode === "scatter" || mode === "wall") &&
