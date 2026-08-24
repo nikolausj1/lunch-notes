@@ -496,22 +496,47 @@ body {
   transform: translateX(-50%);
   z-index: 99000;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
   background: rgba(251, 248, 238, 0.62);
   -webkit-backdrop-filter: blur(9px) saturate(1.1);
   backdrop-filter: blur(9px) saturate(1.1);
-  padding: 8px 18px;
-  border-radius: 999px;
+  padding: 9px 20px 10px;
+  border-radius: 20px;
   box-shadow:
     0 1px 2px rgba(80, 65, 40, 0.14),
     0 5px 14px rgba(80, 65, 40, 0.14);
   font-size: 13.5px;
   font-weight: 600;
   color: var(--ink);
-  white-space: nowrap;
+  max-width: min(92vw, 560px);
+  text-align: center;
   pointer-events: none;
   animation: pill-in 0.3s ease 0.14s backwards;
+}
+
+.zp-title {
+  font-family: var(--font-hand), cursive;
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.zp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+}
+
+.zp-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 @keyframes pill-in {

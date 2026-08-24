@@ -5,6 +5,7 @@ import { getDrawings, tagCounts } from "@/lib/drawings";
 import { ViewMode } from "@/lib/types";
 import { NotesEngine } from "@/lib/engine";
 import { monthKey, formatMonth, formatShortYear } from "@/lib/dates";
+import { ageGradeLabel } from "@/lib/kids";
 import { NoteCard } from "./NoteCard";
 import { ModeSelector } from "./ModeSelector";
 import { DeskSurface } from "./DeskSurface";
@@ -426,27 +427,50 @@ export function Viewer() {
         )}
       </div>
 
-      {mode === "grid" && gridZoom && drawings[gridZoom.idx] && (
-        <div
-          className="zoom-pill"
-          key={drawings[gridZoom.idx].id}
-          style={{ top: `calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)` }}
-        >
-          {formatShortYear(drawings[gridZoom.idx].date)}
-          <span className="zp-sep">·</span>
-          <span className="zp-num">
-            #{numById.get(drawings[gridZoom.idx].id)?.toLocaleString()}
-          </span>
-        </div>
-      )}
+      {mode === "grid" &&
+        gridZoom &&
+        drawings[gridZoom.idx] &&
+        (() => {
+          const d = drawings[gridZoom.idx];
+          return (
+            <div
+              className="zoom-pill"
+              key={d.id}
+              style={{ top: `calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)` }}
+            >
+              {d.title && <div className="zp-title">{d.title}</div>}
+              <div className="zp-row">
+                {d.child && (
+                  <span className={`meta-child child-bg-${d.child.toLowerCase()}`}>
+                    {d.child}
+                    {ageGradeLabel(d.child, d.date) && (
+                      <span className="meta-age"> · {ageGradeLabel(d.child, d.date)}</span>
+                    )}
+                  </span>
+                )}
+                <span className="zp-date">
+                  {formatShortYear(d.date)}
+                  <span className="zp-sep">·</span>
+                  <span className="zp-num">
+                    drawing #{numById.get(d.id)?.toLocaleString()}
+                  </span>
+                </span>
+                {d.tags?.map((t) => (
+                  <span key={t} className="meta-tag">{t}</span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
       <MetadataPanel
         drawing={focus != null ? drawings[focus] ?? null : null}
         mode={mode}
       />
+      {/* grid zoom puts everything in the caption pill instead */}
       <HoldMetadata
         ref={holdTipRef}
-        drawing={held != null ? drawings[held] ?? null : null}
+        drawing={held != null && mode !== "grid" ? drawings[held] ?? null : null}
       />
 
       {(mode === "stack" || mode === "timeline" || mode === "scatter" || mode === "wall") &&
