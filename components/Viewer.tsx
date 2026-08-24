@@ -389,7 +389,7 @@ export function Viewer() {
         {(["Chase", "Vinny"] as const).map((c) => (
           <button
             key={c}
-            className="filter-btn"
+            className="filter-btn filter-child"
             data-active={childFilter === c}
             onClick={() => setChildFilter(childFilter === c ? null : c)}
           >

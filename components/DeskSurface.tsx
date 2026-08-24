@@ -37,7 +37,7 @@ export function DeskSurface({ count }: { count: number }) {
         <span className="title-slip-tape" aria-hidden />
         <h1>{SITE_TITLE}</h1>
         <p>
-          {count.toLocaleString()} drawings for my sons&rsquo; lunches
+          {`${count.toLocaleString()} drawings for my sons’ lunches`}
           {" · "}
           <span className="slip-hint">the story</span>
         </p>
