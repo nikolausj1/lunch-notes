@@ -362,20 +362,22 @@ export function Viewer() {
         {mode === "grid" && (
           <div className="size-control" role="group" aria-label="Note size">
           <span className="size-control-label">note size</span>
-          {([
-            { label: "S", cols: 7 },
-            { label: "M", cols: 5 },
-            { label: "L", cols: 3 },
-          ] as const).map((o) => (
-            <button
-              key={o.label}
-              className="size-btn"
-              data-active={gridCols === o.cols}
-              onClick={() => changeGridCols(o.cols)}
-            >
-              {o.label}
-            </button>
-          ))}
+          <div className="size-btn-row">
+            {([
+              { label: "S", cols: 7 },
+              { label: "M", cols: 5 },
+              { label: "L", cols: 3 },
+            ] as const).map((o) => (
+              <button
+                key={o.label}
+                className="size-btn"
+                data-active={gridCols === o.cols}
+                onClick={() => changeGridCols(o.cols)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
           </div>
         )}
       </div>

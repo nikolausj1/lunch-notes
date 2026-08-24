@@ -392,7 +392,9 @@ export class NotesEngine {
   /** grid click-to-zoom toggle (null = put the zoomed note back) */
   onGridClick(i: number | null) {
     if (this.mode !== "grid") return;
-    this.gridZoom = i == null || i === this.gridZoom ? null : i;
+    // while a note is open, any click — the note, another note, or the
+    // desk — just puts it back; the first click never opens a new one
+    this.gridZoom = this.gridZoom != null ? null : i;
     this.applyMode("grid", false);
     this.setHover(this.gridZoom);
   }
