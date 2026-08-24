@@ -13,8 +13,8 @@ const caveat = Caveat({
 });
 
 const DESCRIPTION =
-  "On my first son's first day of preschool, I put a small astronaut drawing " +
-  "in his lunchbox so he'd have a smile for lunch. More than two thousand " +
+  "On my first son's first day of preschool, I put a small drawing in his " +
+  "lunchbox so he'd have a smile for lunch. More than two thousand " +
   "school-day drawings later, they're all here.";
 
 export const metadata: Metadata = {
