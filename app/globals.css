@@ -6,7 +6,7 @@
   --ink: #3f3a31;
   --ink-soft: #7d7565;
   --paper: #fbf8ee;
-  --accent: #d9903f;
+  --accent: #4d7fb3;
   --chase: #5f8fc7;
   --vinny: #d97f4b;
   --note-size: 140px;
@@ -84,7 +84,7 @@ body {
 .slip-hint {
   text-decoration: underline;
   text-underline-offset: 2px;
-  color: #a06b22;
+  color: #3d6a99;
 }
 
 /* --------------------------------------------------- origin story sheet */
@@ -636,7 +636,7 @@ body {
   pointer-events: none;
 }
 .ts-tip[data-on="true"] { opacity: 1; }
-.ts-tip b { color: #a06b22; }
+.ts-tip b { color: #3d6a99; }
 
 @media (max-width: 640px) {
   .time-strip { width: 44px; right: 0; top: 176px; bottom: 96px; }
@@ -677,7 +677,7 @@ body {
 .filter-btn { transform: rotate(-0.6deg); }
 .filter-select { transform: rotate(0.5deg); max-width: 170px; }
 .filter-btn[data-active="true"] {
-  background: linear-gradient(180deg, #c99045, #b97f36);
+  background: linear-gradient(180deg, #5688bc, #446f9e);
   color: #fff;
 }
 .filter-clear { color: var(--ink); }
@@ -746,8 +746,8 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: linear-gradient(180deg, #c99045, #b97f36);
-  box-shadow: 0 2px 6px rgba(150, 100, 30, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+  background: linear-gradient(180deg, #5688bc, #446f9e);
+  box-shadow: 0 2px 6px rgba(40, 70, 110, 0.35), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 .mode-btn-label {
@@ -889,9 +889,9 @@ body {
 .size-btn:hover { color: var(--ink); }
 
 .size-btn[data-active="true"] {
-  background: linear-gradient(180deg, #c99045, #b97f36);
+  background: linear-gradient(180deg, #5688bc, #446f9e);
   color: #fff;
-  box-shadow: 0 2px 5px rgba(150, 100, 30, 0.3);
+  box-shadow: 0 2px 5px rgba(40, 70, 110, 0.3);
 }
 
 
@@ -997,6 +997,8 @@ body {
    paper pills (nav, cards, slips) keep their own backgrounds and colors */
 html[data-desk-dark] .note-label { color: #d6cfc0; }
 html[data-desk-dark] .ts-tick { background: rgba(238, 229, 208, 0.42); }
+html[data-desk-dark] .ts-tick[data-jan="true"] { background: rgba(238, 229, 208, 0.6); }
+html[data-desk-dark] .ts-tick[data-on="true"] { background: rgba(251, 245, 228, 0.92); }
 html[data-desk-dark] .ts-year { color: #cfc7b4; }
 html[data-desk-dark] .scroll-hint { color: #d6cfc0; }
 html[data-desk-dark] .thread-month { color: #d6cfc0; }
