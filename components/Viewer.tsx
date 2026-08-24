@@ -361,7 +361,6 @@ export function Viewer() {
         <ModeSelector mode={mode} onChange={changeMode} />
         {mode === "grid" && (
           <div className="size-control" role="group" aria-label="Note size">
-          <span className="size-control-label">note size</span>
           <div className="size-btn-row">
             {([
               { label: "S", cols: 7 },

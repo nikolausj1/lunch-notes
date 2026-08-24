@@ -857,8 +857,8 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  /* extra top padding: the pill tucks under the nav, the label must not */
-  padding: 8px 12px 5px;
+  /* extra top padding: the pill tucks under the nav, the buttons must not */
+  padding: 7px 10px 4px;
   background: rgba(255, 253, 246, 0.72);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -873,14 +873,6 @@ body {
   display: flex;
   align-items: center;
   gap: 3px;
-}
-
-.size-control-label {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
 }
 
 .size-btn {
