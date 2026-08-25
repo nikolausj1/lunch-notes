@@ -1172,32 +1172,6 @@ html[data-desk-dark] .desk {
 
 /* ------------------------------------------------------------- thread */
 
-/* one sagging span of thread between two hanging notes; positioned,
-   z-ordered, faded, and blurred per-frame by the engine's onThread */
-.thread-seg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  pointer-events: none;
-  color: #8a745a;
-}
-
-.thread-seg svg {
-  display: block;
-  width: 1px;
-  height: 1px;
-  overflow: visible;
-}
-
-.thread-seg path {
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  filter: drop-shadow(0 1.5px 1px rgba(80, 65, 40, 0.28));
-}
-
-html[data-desk-dark] .thread-seg { color: #c9bda6; }
 
 .thread-months {
   position: absolute;
