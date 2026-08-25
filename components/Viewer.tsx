@@ -405,6 +405,11 @@ export function Viewer() {
       onPointerMove={(e) => {
         const eng = engineRef.current;
         if (!eng) return;
+        // hovering the wall rail shouldn't pick up notes underneath it
+        if ((e.target as HTMLElement).closest?.(".wall-rail")) {
+          eng.pointerLeft();
+          return;
+        }
         eng.onPointerMove(e.clientX, e.clientY);
         const td = touchDrag.current;
         if (td && td.pointerId === e.pointerId) {

@@ -34,8 +34,12 @@ export const WallRail = forwardRef<
   const geom = useRef({ h: 0, viewH: 0 });
   const railRef = useRef<HTMLDivElement | null>(null);
   const beadRef = useRef<HTMLDivElement | null>(null);
+  const hoverRef = useRef<HTMLDivElement | null>(null);
+  const tipRef = useRef<HTMLDivElement | null>(null);
   const dragging = useRef(false);
   const curYear = useRef<string>("");
+  // month stretches (ascending frac = newest first) for the hover tooltip
+  const months = useRef<{ frac: number; label: string }[]>([]);
 
   const compute = (ys: number[], h: number) => {
     if (!h || !ys.length) return;
@@ -43,14 +47,24 @@ export const WallRail = forwardRef<
     // each year (and quarter) anchors at the wall-y of its newest drawing
     const yearMin = new Map<string, number>();
     const quarterMin = new Map<string, number>();
+    const monthMin = new Map<string, number>();
     drawings.forEach((d, i) => {
       const y = ys[i];
       if (y == null || !d.date) return;
       const yr = d.date.slice(0, 4);
       const q = yr + "q" + Math.floor((Number(d.date.slice(5, 7)) - 1) / 3);
+      const mo = d.date.slice(0, 7);
       if (!yearMin.has(yr) || y < yearMin.get(yr)!) yearMin.set(yr, y);
       if (!quarterMin.has(q) || y < quarterMin.get(q)!) quarterMin.set(q, y);
+      if (!monthMin.has(mo) || y < monthMin.get(mo)!) monthMin.set(mo, y);
     });
+    const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    months.current = [...monthMin.entries()]
+      .map(([mo, y]) => ({
+        frac: y / h,
+        label: `${MONTH_NAMES[Number(mo.slice(5, 7)) - 1]} ${mo.slice(0, 4)}`,
+      }))
+      .sort((a, b) => a.frac - b.frac);
     const ms: Mark[] = [];
     yearMin.forEach((y, yr) =>
       ms.push({ frac: y / h, kind: "year", label: yr })
@@ -96,14 +110,42 @@ export const WallRail = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawings]);
 
-  const jump = (e: React.PointerEvent) => {
+  const fracAt = (clientY: number) => {
     const rail = railRef.current;
-    const { h, viewH } = geom.current;
-    if (!rail || !h) return;
+    if (!rail) return null;
     const r = rail.getBoundingClientRect();
     // the marks live on an inset track (12px each end)
-    const f = Math.min(1, Math.max(0, (e.clientY - r.top - 12) / (r.height - 24)));
+    return Math.min(1, Math.max(0, (clientY - r.top - 12) / (r.height - 24)));
+  };
+
+  const jump = (e: React.PointerEvent) => {
+    const { h, viewH } = geom.current;
+    const f = fracAt(e.clientY);
+    if (f == null || !h) return;
     onJump(f * h - viewH / 2);
+  };
+
+  const showHover = (e: React.PointerEvent) => {
+    const f = fracAt(e.clientY);
+    if (f == null) return;
+    const top = (f * 100).toFixed(3) + "%";
+    if (hoverRef.current) {
+      hoverRef.current.style.top = top;
+      hoverRef.current.style.opacity = "1";
+    }
+    if (tipRef.current) {
+      let label = "";
+      for (const m of months.current) if (m.frac <= f + 0.004) label = m.label;
+      if (!label && months.current.length) label = months.current[0].label;
+      tipRef.current.textContent = label;
+      tipRef.current.style.top = top;
+      tipRef.current.style.opacity = label ? "1" : "0";
+    }
+  };
+
+  const hideHover = () => {
+    if (hoverRef.current) hoverRef.current.style.opacity = "0";
+    if (tipRef.current) tipRef.current.style.opacity = "0";
   };
 
   return (
@@ -119,6 +161,7 @@ export const WallRail = forwardRef<
       }}
       onPointerMove={(e) => {
         if (dragging.current) jump(e);
+        showHover(e);
       }}
       onPointerUp={() => {
         dragging.current = false;
@@ -126,6 +169,7 @@ export const WallRail = forwardRef<
       onPointerCancel={() => {
         dragging.current = false;
       }}
+      onPointerLeave={hideHover}
     >
       <div className="wr-track" aria-hidden>
         <span className="wr-line" />
@@ -153,6 +197,8 @@ export const WallRail = forwardRef<
             />
           )
         )}
+        <div className="wr-hover" ref={hoverRef} />
+        <div className="wr-tip" ref={tipRef} />
         <div className="wr-bead" ref={beadRef} />
       </div>
     </div>
