@@ -125,7 +125,7 @@ export function Viewer() {
         el.style.top = `${y}px`;
         el.style.transform = flip ? "translate(-100%, -50%)" : "translate(0, -50%)";
       },
-      onThread: (anchors) => {
+      onThread: (anchors, tension) => {
         const byI = new Map(anchors.map((a) => [a.i, a]));
         monthMarks.forEach((m, k) => {
           const el = monthRefs.current[k];
@@ -140,10 +140,15 @@ export function Viewer() {
           }
         });
 
-        // the thread itself: a sagging span between each pair of hanging
-        // notes, walking the chain from nearest to farthest
+        // the thread itself: one span between each pair of hanging notes.
+        // Contact points come from the LIVE note positions (top edge, where
+        // the tape is), so the thread stays attached while notes swing.
+        // Scrolling pulls the line taut (tension -> 1); at rest it relaxes
+        // into a slight droop, with the tension spring's bounce.
         const engNow = engineRef.current;
         const chain = [...anchors].sort((a, b) => b.i - a.i);
+        const noteSize = engNow?.noteSize ?? 0;
+        const slack = Math.max(0, 1 - tension);
         for (let k = 0; k < threadSegs.current.length; k++) {
           const div = threadSegs.current[k];
           const path = threadPaths.current[k];
@@ -156,15 +161,20 @@ export function Viewer() {
           }
           const na = engNow.notes[a.i];
           const nb = engNow.notes[b.i];
-          const left = Math.min(a.x, b.x);
-          const top = Math.min(a.y, b.y);
-          const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          const sag = dist * 0.1;
-          const mx = (a.x + b.x) / 2 - left;
-          const my = Math.max(a.y, b.y) - top + sag;
+          // tape sits on the note's top edge
+          const ax = na.x;
+          const ay = na.y - (noteSize * na.s) / 2;
+          const bx = nb.x;
+          const by = nb.y - (noteSize * nb.s) / 2;
+          const left = Math.min(ax, bx);
+          const top = Math.min(ay, by);
+          const dist = Math.hypot(ax - bx, ay - by);
+          const sag = dist * 0.055 * slack;
+          const mx = (ax + bx) / 2 - left;
+          const my = (ay + by) / 2 - top + sag;
           path.setAttribute(
             "d",
-            `M ${(a.x - left).toFixed(1)} ${(a.y - top).toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${(b.x - left).toFixed(1)} ${(b.y - top).toFixed(1)}`
+            `M ${(ax - left).toFixed(1)} ${(ay - top).toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${(bx - left).toFixed(1)} ${(by - top).toFixed(1)}`
           );
           const depth = Math.min(na.z, nb.z);
           // near spans read as real thread; far ones thin out
