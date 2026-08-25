@@ -892,7 +892,7 @@ body {
   right: 8px;
   top: 92px;
   bottom: 62px; /* clear of the background-picker button */
-  width: 46px;
+  width: 54px; /* room to breathe left of the year labels */
   z-index: 99999;
   background: rgba(251, 248, 238, 0.72);
   -webkit-backdrop-filter: blur(8px);
@@ -981,7 +981,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .wall-rail { top: 132px; bottom: 58px; right: 4px; width: 42px; }
+  .wall-rail { top: 132px; bottom: 58px; right: 4px; width: 50px; }
   .wr-ylabel { right: 20px; font-size: 8px; }
 }
 
