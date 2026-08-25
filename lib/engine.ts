@@ -50,6 +50,10 @@ export type EngineCallbacks = {
   onGridZoom?: (index: number | null, sizePx: number) => void;
   /** wall: a moment was pinned open (index + on-screen size) or handed back (null) */
   onWallOpen?: (index: number | null, sizePx: number) => void;
+  /** wall layout finished: wall-space y per note index + total wall height */
+  onWallLayout?: (ys: number[], height: number) => void;
+  /** wall scroll frame update (drives the year rail) */
+  onWallScroll?: (scroll: number, viewH: number, height: number) => void;
 };
 
 const PEEL_DIST = 280; // wheel px to fully peel one note
@@ -216,6 +220,12 @@ export class NotesEngine {
     if (mode === "wall") this.setHover(this.wallZoom);
   }
 
+  /** year rail: jump/scrub the wall to a wall-space y */
+  setWallScrollTarget(y: number) {
+    if (this.mode !== "wall") return;
+    this.wallScrollTarget = Math.max(0, Math.min(this.maxWallScroll, y));
+  }
+
   /** time strip: jump/scrub the grid to a content-space y */
   setGridScrollTarget(y: number) {
     if (this.mode !== "grid") return;
@@ -278,6 +288,7 @@ export class NotesEngine {
       targets = wl.targets;
       this.wallH = wl.info.height;
       this.wallScrollTarget = Math.min(this.wallScrollTarget, this.maxWallScroll);
+      this.cb.onWallLayout?.(wl.targets.map((t) => t.y), this.wallH);
       this.updateFocus(this.wallZoom); // per-frame follow logic lives in tick
     } else {
       const tl = timelineTargets(this.drawings, this.vp, this.t);
@@ -607,6 +618,7 @@ export class NotesEngine {
       if (!this.wallOpen) this.wallDrift += dt * 16;
       this.wallScroll +=
         (this.wallScrollTarget - this.wallScroll) * Math.min(1, dt * 10);
+      this.cb.onWallScroll?.(this.wallScroll, this.vp.h, this.wallH);
       const wl = wallTargets(this.drawings, this.vp, this.wallDrift);
       this.wallH = wl.info.height;
       const halfRing = wl.info.ringW / 2;

@@ -885,6 +885,108 @@ body {
 }
 
 
+/* ---------------------------------------------------- wall year rail */
+
+.wall-rail {
+  position: fixed;
+  right: 8px;
+  top: 92px;
+  bottom: 62px; /* clear of the background-picker button */
+  width: 46px;
+  z-index: 99999;
+  background: rgba(251, 248, 238, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(80, 65, 40, 0.16),
+    0 5px 14px rgba(80, 65, 40, 0.16);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.wr-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12px;
+  bottom: 12px;
+  pointer-events: none;
+}
+
+.wr-line {
+  position: absolute;
+  right: 12.5px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background: rgba(63, 58, 49, 0.14);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.wr-ydot,
+.wr-sub,
+.wr-bead {
+  position: absolute;
+  right: 13.25px;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+}
+
+.wr-ydot {
+  width: 8px;
+  height: 8px;
+  background: rgba(63, 58, 49, 0.45);
+}
+
+.wr-ydot[data-on="true"] {
+  background: var(--accent);
+  width: 10px;
+  height: 10px;
+}
+
+.wr-sub {
+  width: 3.5px;
+  height: 3.5px;
+  background: rgba(63, 58, 49, 0.28);
+}
+
+.wr-ylabel {
+  position: absolute;
+  right: 22px;
+  transform: translateY(-50%);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+.wr-ylabel[data-on="true"] {
+  color: var(--ink);
+  font-size: 9.5px;
+}
+
+.wr-bead {
+  width: 9px;
+  height: 9px;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 3px rgba(77, 127, 179, 0.25),
+    0 1px 3px rgba(40, 70, 110, 0.4);
+}
+
+@media (max-width: 640px) {
+  .wall-rail { top: 132px; bottom: 58px; right: 4px; width: 42px; }
+  .wr-ylabel { right: 20px; font-size: 8px; }
+}
+
+/* dark desk: the rail is paper, its own colors are fine as-is */
+
 /* --------------------------------------------------- background picker */
 
 .bg-picker {

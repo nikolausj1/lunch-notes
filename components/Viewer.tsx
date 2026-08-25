@@ -14,6 +14,7 @@ import { MetadataPanel, HoldMetadata } from "./MetadataPanel";
 import { LoadingExperience } from "./LoadingExperience";
 import { BackgroundPicker } from "./BackgroundPicker";
 import { TimeStrip, TimeStripHandle } from "./TimeStrip";
+import { WallRail, WallRailHandle } from "./WallRail";
 
 const MIN_LOAD_MS = 1700; // long enough to read the story line, no longer
 
@@ -86,6 +87,8 @@ export function Viewer() {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<TimeStripHandle | null>(null);
   const gridLayoutRef = useRef<{ ys: number[]; contentH: number } | null>(null);
+  const wallRailRef = useRef<WallRailHandle | null>(null);
+  const wallLayoutRef = useRef<{ ys: number[]; h: number } | null>(null);
   const holdTipRef = useRef<HTMLDivElement | null>(null);
   const monthRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const attach = useMemo(
@@ -164,6 +167,13 @@ export function Viewer() {
         setGridZoomState(i == null ? null : { idx: i, size: sizePx }),
       onWallOpen: (i, sizePx) =>
         setWallOpenState(i == null ? null : { idx: i, size: sizePx }),
+      onWallLayout: (ys, h) => {
+        wallLayoutRef.current = { ys, h };
+        wallRailRef.current?.layout(ys, h);
+      },
+      onWallScroll: (scroll, viewH, h) => {
+        wallRailRef.current?.sync(scroll, viewH, h);
+      },
     });
     engineRef.current = eng;
     if (process.env.NODE_ENV === "development") {
@@ -382,7 +392,7 @@ export function Viewer() {
         const eng = engineRef.current;
         if (!eng) return;
         // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .nav-stack, .time-strip, .title-slip, .story-backdrop, .bg-picker")) return;
+        if ((e.target as HTMLElement).closest("button, .nav-stack, .time-strip, .wall-rail, .title-slip, .story-backdrop, .bg-picker")) return;
         const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
         const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
         eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -502,6 +512,15 @@ export function Viewer() {
           numById={numById}
           getLayout={() => gridLayoutRef.current}
           onJump={(y) => engineRef.current?.setGridScrollTarget(y)}
+        />
+      )}
+
+      {mode === "wall" && loaded && (
+        <WallRail
+          ref={wallRailRef}
+          drawings={drawings}
+          getLayout={() => wallLayoutRef.current}
+          onJump={(y) => engineRef.current?.setWallScrollTarget(y)}
         />
       )}
 
