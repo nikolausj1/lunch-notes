@@ -141,31 +141,50 @@ export function Viewer() {
         });
 
         // the thread itself: one span between each pair of hanging notes.
-        // Contact points come from the LIVE note positions (top edge, where
-        // the tape is), so the thread stays attached while notes swing.
-        // Scrolling pulls the line taut (tension -> 1); at rest it relaxes
-        // into a slight droop, with the tension spring's bounce.
+        // Contact points are the LIVE tape positions — the note's top-center
+        // rotated by its current sway — so the thread stays glued to the
+        // tape while notes tilt and swing. Scrolling pulls the line taut
+        // (tension -> 1); at rest it relaxes slightly, with the spring's
+        // bounce when a scroll stops.
         const engNow = engineRef.current;
-        const chain = [...anchors].sort((a, b) => b.i - a.i);
+        const chain = [...anchors].sort((a, b) => b.i - a.i).map((a) => a.i);
+        // the note currently passing the viewer keeps the thread running
+        // past the focused note instead of dead-ending in midair
+        if (engNow && chain.length) {
+          const pn = engNow.notes[chain[0] + 1];
+          if (pn && !pn.hidden && !pn.culled && pn.opT > 0.05) {
+            chain.unshift(chain[0] + 1);
+          }
+        }
         const noteSize = engNow?.noteSize ?? 0;
         const slack = Math.max(0, 1 - tension);
+        // timeline notes rotate/scale about transform-origin 50% -6% — the
+        // point where the tape grips the rope. That pivot is invariant under
+        // the note's sway and scale: screen (n.x, n.y - 0.56 * noteSize),
+        // which lands on the tape's top edge. Attach the thread there and
+        // the tape always overlaps it.
+        const tapeOf = (n: { x: number; y: number }) => ({
+          x: n.x,
+          y: n.y - 0.56 * noteSize,
+        });
         for (let k = 0; k < threadSegs.current.length; k++) {
           const div = threadSegs.current[k];
           const path = threadPaths.current[k];
           if (!div || !path) continue;
-          const a = chain[k];
-          const b = chain[k + 1];
-          if (!a || !b || !engNow) {
+          const ai = chain[k];
+          const bi = chain[k + 1];
+          if (ai == null || bi == null || !engNow) {
             div.style.opacity = "0";
             continue;
           }
-          const na = engNow.notes[a.i];
-          const nb = engNow.notes[b.i];
-          // tape sits on the note's top edge
-          const ax = na.x;
-          const ay = na.y - (noteSize * na.s) / 2;
-          const bx = nb.x;
-          const by = nb.y - (noteSize * nb.s) / 2;
+          const na = engNow.notes[ai];
+          const nb = engNow.notes[bi];
+          const pa = tapeOf(na);
+          const pb = tapeOf(nb);
+          const ax = pa.x;
+          const ay = pa.y;
+          const bx = pb.x;
+          const by = pb.y;
           const left = Math.min(ax, bx);
           const top = Math.min(ay, by);
           const dist = Math.hypot(ax - bx, ay - by);
