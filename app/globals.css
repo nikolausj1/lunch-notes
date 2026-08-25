@@ -1028,6 +1028,10 @@ body {
   .wr-ylabel { right: 20px; font-size: 8px; }
 }
 
+/* while a moment is pinned open, the notes outrank the rail */
+html[data-wall-open="1"] .wall-rail { z-index: 4; }
+html[data-wall-open="1"] .notes-layer { z-index: 5; }
+
 /* dark desk: the rail is paper, its own colors are fine as-is */
 
 /* --------------------------------------------------- background picker */

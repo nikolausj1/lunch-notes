@@ -309,6 +309,13 @@ export function Viewer() {
     syncThemeColor();
   }, []);
 
+  // a pinned wall moment outranks the year rail if they overlap
+  useEffect(() => {
+    const root = document.documentElement;
+    if (mode === "wall" && wallOpen) root.dataset.wallOpen = "1";
+    else delete root.dataset.wallOpen;
+  }, [wallOpen, mode]);
+
   // shareable links: the open drawing's number lives in the URL hash.
   // Only clear a hash we wrote — the arrival hash must survive until the
   // open-from-hash effect below has consumed it.
@@ -382,6 +389,11 @@ export function Viewer() {
     pointerId: number;
   } | null>(null);
   const press = useRef<{ x: number; y: number; t: number; idx: number | null } | null>(null);
+  // two-finger pinch on the grid steps the note size (S <-> M <-> L)
+  const pinch = useRef<{
+    pts: Map<number, { x: number; y: number }>;
+    startDist: number | null;
+  }>({ pts: new Map(), startDist: null });
 
   return (
     <div
@@ -400,6 +412,16 @@ export function Viewer() {
         if (e.pointerType !== "mouse" && mode !== "scatter" && !eng.stackDragging) {
           touchDrag.current = { lastY: e.clientY, lastT: e.timeStamp, vel: 0, pointerId: e.pointerId };
         }
+        if (e.pointerType !== "mouse") {
+          const pn = pinch.current;
+          pn.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pn.pts.size === 2) {
+            const [p1, p2] = [...pn.pts.values()];
+            pn.startDist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+            touchDrag.current = null; // a pinch is not a scroll
+            press.current = null; // ...and not a click
+          }
+        }
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
       }}
       onPointerMove={(e) => {
@@ -409,6 +431,28 @@ export function Viewer() {
         if ((e.target as HTMLElement).closest?.(".wall-rail")) {
           eng.pointerLeft();
           return;
+        }
+        // active pinch: spread = bigger notes, squeeze = smaller (grid only)
+        const pn = pinch.current;
+        if (pn.pts.has(e.pointerId)) {
+          pn.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        }
+        if (pn.pts.size >= 2 && pn.startDist != null) {
+          const [p1, p2] = [...pn.pts.values()];
+          const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+          const ratio = d / pn.startDist;
+          if (mode === "grid") {
+            const SIZES = [7, 5, 3]; // S, M, L
+            const at = SIZES.indexOf(gridCols);
+            if (ratio > 1.35 && at >= 0 && at < SIZES.length - 1) {
+              changeGridCols(SIZES[at + 1]);
+              pn.startDist = d; // re-arm so a long spread can step twice
+            } else if (ratio < 0.74 && at > 0) {
+              changeGridCols(SIZES[at - 1]);
+              pn.startDist = d;
+            }
+          }
+          return; // pinch moves never feed the scroll physics
         }
         eng.onPointerMove(e.clientX, e.clientY);
         const td = touchDrag.current;
@@ -424,6 +468,8 @@ export function Viewer() {
       onPointerUp={(e) => {
         const eng = engineRef.current;
         eng?.onPointerUp();
+        pinch.current.pts.delete(e.pointerId);
+        if (pinch.current.pts.size < 2) pinch.current.startDist = null;
         // touch release: hand the finger's velocity to the engine as
         // kinetic momentum (iOS-style glide)
         const td = touchDrag.current;
@@ -445,9 +491,11 @@ export function Viewer() {
           else eng.onWallClick(p.idx);
         }
       }}
-      onPointerCancel={() => {
+      onPointerCancel={(e) => {
         engineRef.current?.onPointerUp();
         touchDrag.current = null;
+        pinch.current.pts.delete(e.pointerId);
+        if (pinch.current.pts.size < 2) pinch.current.startDist = null;
       }}
       onPointerLeave={() => engineRef.current?.pointerLeft()}
     >
