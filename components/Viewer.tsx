@@ -527,11 +527,12 @@ export function Viewer() {
         drawing={focus != null ? drawings[focus] ?? null : null}
         mode={mode}
       />
-      {/* grid zoom and a pinned wall moment use the caption pill instead */}
+      {/* grid zoom and wall use the caption pill (wall: only when pinned);
+          the riding card stays for scatter's hold-to-inspect */}
       <HoldMetadata
         ref={holdTipRef}
         drawing={
-          held != null && mode !== "grid" && !(mode === "wall" && wallOpen)
+          held != null && mode !== "grid" && mode !== "wall"
             ? drawings[held] ?? null
             : null
         }
