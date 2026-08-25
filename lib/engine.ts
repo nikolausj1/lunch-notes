@@ -676,7 +676,9 @@ export class NotesEngine {
       // the featured note's target: on the hand, or pinned at center
       const zi = this.wallZoom;
       if (zi != null && this.notes[zi]) {
-        const big = Math.min((this.vp.h * 0.52) / size0, (this.vp.w * 0.4) / size0);
+        // phones: a pinned moment should nearly fill the width
+        const wFrac = this.vp.w < 640 ? 0.85 : 0.4;
+        const big = Math.min((this.vp.h * 0.52) / size0, (this.vp.w * wFrac) / size0);
         this.wallFocusHalf = (big * size0) / 2;
         const nz = this.notes[zi];
         if (this.wallOpen) {
