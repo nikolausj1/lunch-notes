@@ -91,6 +91,10 @@ export function Viewer() {
   const wallLayoutRef = useRef<{ ys: number[]; h: number } | null>(null);
   const holdTipRef = useRef<HTMLDivElement | null>(null);
   const monthRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  // timeline thread: a pool of sagging segments between hanging notes,
+  // each z-ordered between its two notes so nearer post-its occlude it
+  const threadSegs = useRef<(HTMLDivElement | null)[]>([]);
+  const threadPaths = useRef<(SVGPathElement | null)[]>([]);
   const attach = useMemo(
     () => (i: number, el: HTMLDivElement | null) => engineRef.current?.attach(i, el),
     []
@@ -135,6 +139,42 @@ export function Viewer() {
             el.style.opacity = "0";
           }
         });
+
+        // the thread itself: a sagging span between each pair of hanging
+        // notes, walking the chain from nearest to farthest
+        const engNow = engineRef.current;
+        const chain = [...anchors].sort((a, b) => b.i - a.i);
+        for (let k = 0; k < threadSegs.current.length; k++) {
+          const div = threadSegs.current[k];
+          const path = threadPaths.current[k];
+          if (!div || !path) continue;
+          const a = chain[k];
+          const b = chain[k + 1];
+          if (!a || !b || !engNow) {
+            div.style.opacity = "0";
+            continue;
+          }
+          const na = engNow.notes[a.i];
+          const nb = engNow.notes[b.i];
+          const left = Math.min(a.x, b.x);
+          const top = Math.min(a.y, b.y);
+          const dist = Math.hypot(a.x - b.x, a.y - b.y);
+          const sag = dist * 0.1;
+          const mx = (a.x + b.x) / 2 - left;
+          const my = Math.max(a.y, b.y) - top + sag;
+          path.setAttribute(
+            "d",
+            `M ${(a.x - left).toFixed(1)} ${(a.y - top).toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${(b.x - left).toFixed(1)} ${(b.y - top).toFixed(1)}`
+          );
+          const depth = Math.min(na.z, nb.z);
+          // near spans read as real thread; far ones thin out
+          path.setAttribute("stroke-width", (0.8 + 1.5 * (depth / 2000)).toFixed(2));
+          div.style.transform = `translate3d(${left.toFixed(1)}px, ${top.toFixed(1)}px, 0)`;
+          div.style.zIndex = String(Math.max(0, depth - 1));
+          div.style.opacity = (Math.max(0, Math.min(na.opT, nb.opT)) * 0.95).toFixed(3);
+          const bl = Math.min(6, (na.blurT + nb.blurT) / 2);
+          div.style.filter = bl > 0.3 ? `blur(${bl.toFixed(1)}px)` : "";
+        }
       },
       onGridLayout: (ys, contentH) => {
         gridLayoutRef.current = { ys, contentH };
@@ -484,6 +524,26 @@ export function Viewer() {
             <p>Drawings will appear here soon.</p>
           </div>
         )}
+        {/* thread segments live beside the notes so z-index interleaves */}
+        {mode === "timeline" &&
+          Array.from({ length: 12 }).map((_, k) => (
+            <div
+              className="thread-seg"
+              key={`th${k}`}
+              aria-hidden
+              ref={(el) => {
+                threadSegs.current[k] = el;
+              }}
+            >
+              <svg>
+                <path
+                  ref={(el) => {
+                    threadPaths.current[k] = el;
+                  }}
+                />
+              </svg>
+            </div>
+          ))}
       </div>
 
       <div className="nav-stack">
