@@ -95,6 +95,7 @@ export function Viewer() {
   // each z-ordered between its two notes so nearer post-its occlude it
   const threadSegs = useRef<(HTMLDivElement | null)[]>([]);
   const threadPaths = useRef<(SVGPathElement | null)[]>([]);
+  const threadGrads = useRef<(SVGLinearGradientElement | null)[]>([]);
   const attach = useMemo(
     () => (i: number, el: HTMLDivElement | null) => engineRef.current?.attach(i, el),
     []
@@ -150,10 +151,12 @@ export function Viewer() {
         const chain = [...anchors].sort((a, b) => b.i - a.i).map((a) => a.i);
         // the note currently passing the viewer keeps the thread running
         // past the focused note instead of dead-ending in midair
+        let hasTail = false;
         if (engNow && chain.length) {
           const pn = engNow.notes[chain[0] + 1];
           if (pn && !pn.hidden && !pn.culled && pn.opT > 0.05) {
             chain.unshift(chain[0] + 1);
+            hasTail = true;
           }
         }
         const noteSize = engNow?.noteSize ?? 0;
@@ -181,8 +184,12 @@ export function Viewer() {
           const nb = engNow.notes[bi];
           const pa = tapeOf(na);
           const pb = tapeOf(nb);
-          const ax = pa.x;
-          const ay = pa.y;
+          // the near span is a TAIL: the passing note is blurred almost
+          // invisible, so instead of hiding behind it the thread rides above
+          // and dissolves along its length, like it left the depth of field
+          const isTail = hasTail && k === 0;
+          const ax = isTail ? pb.x + (pa.x - pb.x) * 0.45 : pa.x;
+          const ay = isTail ? pb.y + (pa.y - pb.y) * 0.45 : pa.y;
           const bx = pb.x;
           const by = pb.y;
           const left = Math.min(ax, bx);
@@ -195,13 +202,25 @@ export function Viewer() {
             "d",
             `M ${(ax - left).toFixed(1)} ${(ay - top).toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${(bx - left).toFixed(1)} ${(by - top).toFixed(1)}`
           );
+          const grad = threadGrads.current[k];
+          if (isTail) {
+            path.setAttribute("stroke", `url(#thgrad${k})`);
+            grad?.setAttribute("x1", (bx - left).toFixed(1));
+            grad?.setAttribute("y1", (by - top).toFixed(1));
+            grad?.setAttribute("x2", (ax - left).toFixed(1));
+            grad?.setAttribute("y2", (ay - top).toFixed(1));
+          } else {
+            path.removeAttribute("stroke");
+          }
           const depth = Math.min(na.z, nb.z);
           // near spans read as real thread; far ones thin out
           path.setAttribute("stroke-width", (0.8 + 1.5 * (depth / 2000)).toFixed(2));
           div.style.transform = `translate3d(${left.toFixed(1)}px, ${top.toFixed(1)}px, 0)`;
-          div.style.zIndex = String(Math.max(0, depth - 1));
-          div.style.opacity = (Math.max(0, Math.min(na.opT, nb.opT)) * 0.95).toFixed(3);
-          const bl = Math.min(6, (na.blurT + nb.blurT) / 2);
+          div.style.zIndex = String(isTail ? na.z + 10 : Math.max(0, depth - 1));
+          div.style.opacity = isTail
+            ? "0.85"
+            : (Math.max(0, Math.min(na.opT, nb.opT)) * 0.95).toFixed(3);
+          const bl = isTail ? 0 : Math.min(6, (na.blurT + nb.blurT) / 2);
           div.style.filter = bl > 0.3 ? `blur(${bl.toFixed(1)}px)` : "";
         }
       },
@@ -565,6 +584,19 @@ export function Viewer() {
               }}
             >
               <svg>
+                <defs>
+                  <linearGradient
+                    id={`thgrad${k}`}
+                    gradientUnits="userSpaceOnUse"
+                    ref={(el) => {
+                      threadGrads.current[k] = el;
+                    }}
+                  >
+                    <stop offset="0" stopColor="currentColor" stopOpacity="1" />
+                    <stop offset="0.75" stopColor="currentColor" stopOpacity="0.4" />
+                    <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
                 <path
                   ref={(el) => {
                     threadPaths.current[k] = el;
