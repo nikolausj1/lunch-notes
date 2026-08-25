@@ -946,8 +946,8 @@ export class NotesEngine {
         const n = this.notes[best.i];
         const half = (size * n.s) / 2;
         this.gridTiltI = best.i;
-        this.gridTiltX = ((p.x - n.x) / half) * 7; // deg for rotateY
-        this.gridTiltY = (-(p.y - (n.y - this.scroll)) / half) * 7; // deg for rotateX
+        this.gridTiltX = ((p.x - n.x) / half) * 12; // deg for rotateY
+        this.gridTiltY = (-(p.y - (n.y - this.scroll)) / half) * 12; // deg for rotateX
       } else {
         this.gridTiltI = -1;
       }
