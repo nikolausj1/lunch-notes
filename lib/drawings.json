@@ -26077,5 +26077,55 @@
 "Ocean",
 "Animals"
 ]
+},
+{
+"id": "df491d43899",
+"imageSrc": "/notes/df491d43899.webp",
+"thumbSrc": "/thumbs/df491d43899.webp",
+"date": "2026-09-02",
+"dateSource": "written",
+"child": "Chase",
+"title": "Percy's First Day",
+"tags": [
+"Characters",
+"Movies"
+]
+},
+{
+"id": "d6624fe24a5",
+"imageSrc": "/notes/d6624fe24a5.webp",
+"thumbSrc": "/thumbs/d6624fe24a5.webp",
+"date": "2026-09-02",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Percy's First Day",
+"tags": [
+"Characters",
+"Movies"
+]
+},
+{
+"id": "da6fe5a3a9d",
+"imageSrc": "/notes/da6fe5a3a9d.webp",
+"thumbSrc": "/thumbs/da6fe5a3a9d.webp",
+"date": "2026-09-03",
+"dateSource": "written",
+"child": "Chase",
+"title": "U10 Team Mexico",
+"tags": [
+"Sports"
+]
+},
+{
+"id": "d441af0fdfc",
+"imageSrc": "/notes/d441af0fdfc.webp",
+"thumbSrc": "/thumbs/d441af0fdfc.webp",
+"date": "2026-09-03",
+"dateSource": "written",
+"child": "Vinny",
+"title": "U8 Team Algeria",
+"tags": [
+"Sports"
+]
 }
 ]
