@@ -19470,7 +19470,7 @@
 "date": "2025-02-24",
 "dateSource": "written",
 "child": "Chase",
-"title": "Big-Eared Fox",
+"title": "Fennec Fox",
 "tags": [
 "Animals"
 ]
@@ -26079,6 +26079,19 @@
 ]
 },
 {
+"id": "d6624fe24a5",
+"imageSrc": "/notes/d6624fe24a5.webp",
+"thumbSrc": "/thumbs/d6624fe24a5.webp",
+"date": "2026-09-02",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Percy's First Day",
+"tags": [
+"Characters",
+"Movies"
+]
+},
+{
 "id": "df491d43899",
 "imageSrc": "/notes/df491d43899.webp",
 "thumbSrc": "/thumbs/df491d43899.webp",
@@ -26092,16 +26105,15 @@
 ]
 },
 {
-"id": "d6624fe24a5",
-"imageSrc": "/notes/d6624fe24a5.webp",
-"thumbSrc": "/thumbs/d6624fe24a5.webp",
-"date": "2026-09-02",
+"id": "d441af0fdfc",
+"imageSrc": "/notes/d441af0fdfc.webp",
+"thumbSrc": "/thumbs/d441af0fdfc.webp",
+"date": "2026-09-03",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Percy's First Day",
+"title": "U8 Team Algeria",
 "tags": [
-"Characters",
-"Movies"
+"Sports"
 ]
 },
 {
@@ -26117,15 +26129,29 @@
 ]
 },
 {
-"id": "d441af0fdfc",
-"imageSrc": "/notes/d441af0fdfc.webp",
-"thumbSrc": "/thumbs/d441af0fdfc.webp",
-"date": "2026-09-03",
+"id": "d274cdcc192",
+"imageSrc": "/notes/d274cdcc192.webp",
+"thumbSrc": "/thumbs/d274cdcc192.webp",
+"date": "2026-09-04",
 "dateSource": "written",
 "child": "Vinny",
-"title": "U8 Team Algeria",
+"title": "Birch Bay Sailboat",
 "tags": [
-"Sports"
+"Nature",
+"Ocean"
+]
+},
+{
+"id": "d7e26191add",
+"imageSrc": "/notes/d7e26191add.webp",
+"thumbSrc": "/thumbs/d7e26191add.webp",
+"date": "2026-09-04",
+"dateSource": "written",
+"child": "Chase",
+"title": "Birch Bay Sunset",
+"tags": [
+"Nature",
+"Ocean"
 ]
 }
 ]
