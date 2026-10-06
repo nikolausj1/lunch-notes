@@ -1,6 +1,6 @@
 /**
  * The origin story, in Justin's words (final, chosen 2026-08-24).
- * The same text appears in the loading beat, the title-slip story sheet,
+ * The same text appears in the welcome note, the title-slip story sheet,
  * and the social share description (app/layout.tsx).
  */
 
@@ -10,7 +10,7 @@ const ORIGIN =
   "they've become little paper time capsules: everything my sons loved, " +
   "one school lunch at a time, since 2019.";
 
-/** Shown during the loading beat, buried by the arriving notes. */
+/** The welcome note that greets every visit (IntroNote). */
 export const STORY_LINE = ORIGIN;
 
 /** The story behind the title slip. */

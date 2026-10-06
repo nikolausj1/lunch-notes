@@ -26,6 +26,7 @@ export function ModeSelector({
           role="tab"
           aria-selected={mode === m}
           className="mode-btn"
+          data-mode={m}
           data-active={mode === m}
           onClick={() => onChange(m)}
         >

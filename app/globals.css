@@ -146,31 +146,6 @@ body {
   padding: 4px;
 }
 
-/* -------------------------------------------- loading story additions */
-
-.loading-story {
-  font-family: var(--font-hand), cursive;
-  font-size: 34px;
-  color: var(--ink);
-  margin: 0;
-  max-width: min(700px, 86vw);
-  text-align: center;
-  line-height: 1.45;
-}
-
-@media (max-width: 640px) {
-  /* the full origin line needs a smaller hand on phones */
-  .loading-story { font-size: 24px; }
-}
-
-.loading-count {
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin: -14px 0 0;
-}
-
 .title-slip h1 {
   font-family: var(--font-hand), cursive;
   font-size: 26px;
@@ -748,7 +723,13 @@ body {
 }
 
 @media (max-width: 480px) {
-  .mode-btn { padding: 6px 11px; font-size: 12px; }
+  .mode-btn { padding: 6px 13px; font-size: 12.5px; }
+}
+
+/* phones: no Scatter (it's built for a mouse; on touch every drag fights the
+   scroll). Viewer moves a phone-width window out of scatter if it's open. */
+@media (max-width: 640px) {
+  .mode-btn[data-mode="scatter"] { display: none; }
 }
 
 /* ----------------------------------------------------------- metadata */
@@ -1151,10 +1132,6 @@ html[data-desk-dark] .scatter-tip .meta-tag {
   color: #d6cfc0;
 }
 
-/* loading screen text sits on the desk color too */
-html[data-desk-dark] .loading-story { color: #efe9db; }
-html[data-desk-dark] .loading p { color: #cfc7b4; }
-html[data-desk-dark] .loading-count { color: #cfc7b4; }
 
 /* the cream top-glow reads wrong on a dark desk — dim the lighting */
 html[data-desk-dark] .desk {
@@ -1226,57 +1203,140 @@ html[data-desk-dark] .desk {
 @keyframes hint-in { to { opacity: 0.85; } }
 @keyframes hint-out { to { opacity: 0; } }
 
-/* ------------------------------------------------------------ loading */
+/* ------------------------------------------------------- welcome note */
 
-.loading {
+/* the origin story on the title slip's paper, centered over a scrim on
+   every visit while the post-its fly into place beneath it; closing it
+   flies the note up into the slip (IntroNote.tsx) */
+.intro {
   position: fixed;
   inset: 0;
   z-index: 200000; /* covers everything, including the fixed chrome */
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 26px;
-  background: var(--desk);
-  /* slow fade: the arriving post-its visibly cover the story line */
-  transition: opacity 1.3s ease;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 16px;
+  background: rgba(52, 42, 26, 0.42);
+  transition: background-color 0.3s ease;
 }
 
-.loading[data-done="true"] {
-  opacity: 0;
+.intro[data-phase="leaving"] {
+  background-color: rgba(52, 42, 26, 0);
   pointer-events: none;
 }
 
-.loading p {
-  font-family: var(--font-hand), cursive;
-  font-size: 21px;
-  color: var(--ink-soft);
-  margin: 0;
-}
-
-.loading-stack {
+.intro-note {
   position: relative;
-  width: 74px;
-  height: 74px;
+  margin: auto; /* centers, but never clips on short screens */
+  width: min(540px, 100%);
+  background: var(--paper);
+  padding: 30px 36px 26px;
+  transform: rotate(-1deg);
+  box-shadow:
+    0 2px 4px rgba(80, 65, 40, 0.2),
+    0 22px 54px rgba(40, 32, 18, 0.4);
+  animation: intro-in 0.6s cubic-bezier(0.2, 1.1, 0.3, 1) backwards;
 }
 
-.loading-note {
-  position: absolute;
-  inset: 0;
-  background: #f6ee9f;
-  box-shadow: 0 2px 5px rgba(80, 65, 40, 0.2);
-  animation: pile-drop 2s ease-in-out infinite;
+@keyframes intro-in {
+  from { transform: translateY(16px) rotate(-2.6deg) scale(0.96); opacity: 0; }
 }
 
-.loading-note:nth-child(1) { background: #f1e896; animation-delay: 0s; }
-.loading-note:nth-child(2) { background: #f4ec9d; animation-delay: 0.25s; }
-.loading-note:nth-child(3) { animation-delay: 0.5s; }
+.intro-note .title-slip-tape {
+  top: -10px;
+  width: 76px;
+  height: 20px;
+}
 
-@keyframes pile-drop {
-  0% { transform: translateY(-46px) rotate(-8deg); opacity: 0; }
-  28% { transform: translateY(0) rotate(4deg); opacity: 1; }
-  62% { transform: translateY(0) rotate(4deg); opacity: 1; }
-  100% { transform: translateY(6px) rotate(0deg); opacity: 0; }
+.intro-note h2 {
+  font-family: var(--font-hand), cursive;
+  font-size: 36px;
+  line-height: 1;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+
+.intro-story {
+  font-family: var(--font-hand), cursive;
+  font-size: 23px;
+  line-height: 1.4;
+  margin: 0;
+  color: var(--ink);
+}
+
+.intro-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.intro-count {
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.intro-go {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, #5688bc, #446f9e);
+  box-shadow: 0 2px 6px rgba(40, 70, 110, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.intro-go:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 70, 110, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.intro-go:active { transform: translateY(0); }
+
+.intro-go:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(77, 127, 179, 0.32),
+    0 2px 6px rgba(40, 70, 110, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 640px) {
+  .intro-note { padding: 26px 22px 20px; }
+  .intro-note h2 { font-size: 30px; margin-bottom: 10px; }
+  .intro-story { font-size: 20px; }
+  /* the count gets its own line; the button spans the note (easy thumb target) */
+  .intro-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .intro-go { padding: 12px 22px; }
+}
+
+/* the slip the note becomes: hidden while the note is up (IntroNote fades
+   it back in as the paper lands on it) */
+body:has(.intro[data-phase="open"]) .title-slip { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-note { animation: none; }
+  .intro[data-phase="leaving"] .intro-note {
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  body:has(.intro[data-phase="leaving"]) .title-slip {
+    transition: opacity 0.25s ease;
+  }
 }
 
 /* --------------------------------------------------------- empty desk */

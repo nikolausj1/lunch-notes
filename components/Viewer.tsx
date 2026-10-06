@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDrawings } from "@/lib/drawings";
 import { syncThemeColor } from "@/lib/theme";
 import { LunchDrawing, ViewMode } from "@/lib/types";
@@ -11,12 +11,14 @@ import { NoteCard } from "./NoteCard";
 import { ModeSelector } from "./ModeSelector";
 import { DeskSurface } from "./DeskSurface";
 import { MetadataPanel, HoldMetadata } from "./MetadataPanel";
-import { LoadingExperience } from "./LoadingExperience";
+import { IntroNote } from "./IntroNote";
 import { BackgroundPicker } from "./BackgroundPicker";
 import { TimeStrip, TimeStripHandle } from "./TimeStrip";
 import { WallRail, WallRailHandle } from "./WallRail";
 
-const MIN_LOAD_MS = 1700; // long enough to read the story line, no longer
+// when "Open the Lunchbox" comes before the preload finishes, wait at most this
+// long before the post-its fly in anyway (they fill in as images arrive)
+const REVEAL_GRACE_MS = 800;
 
 /** frosted caption under an opened note (grid zoom, wall pinned moment) */
 function CaptionPill({
@@ -83,7 +85,15 @@ export function Viewer() {
   const [loaded, setLoaded] = useState(false);
 
   const engineRef = useRef<NotesEngine | null>(null);
-  const firstLoadRef = useRef(true);
+  // the post-its fly in when the welcome note closes, not while it's being read
+  const introClosed = useRef<{ done: boolean; wake: (() => void) | null }>({
+    done: false,
+    wake: null,
+  });
+  const onIntroClose = useCallback(() => {
+    introClosed.current.done = true;
+    introClosed.current.wake?.();
+  }, []);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<TimeStripHandle | null>(null);
   const gridLayoutRef = useRef<{ ys: number[]; contentH: number } | null>(null);
@@ -202,34 +212,39 @@ export function Viewer() {
     });
     if (surfaceRef.current) ro.observe(surfaceRef.current);
 
-    // preload thumbnails, then reveal (PRD §16). The wall (default mode)
-    // shows the NEWEST drawings first, so preload from the end.
-    const started = performance.now();
-    const preload = drawings.slice(-160).map(
-      (d) =>
+    // preload behind the welcome note (PRD §16): thumbnails for the newest
+    // notes, plus the full-size images the default grid (size M) shows on its
+    // first screen. Grid and Wall show the NEWEST drawings first.
+    const preload = [
+      ...drawings.slice(-160).map((d) => d.thumbSrc),
+      ...drawings.slice(-20).map((d) => d.imageSrc),
+    ].map(
+      (src) =>
         new Promise<void>((res) => {
           const img = new Image();
           img.onload = img.onerror = () => res();
-          img.src = d.thumbSrc;
+          img.src = src;
         })
     );
-    let cancelled = false;
-    Promise.race([
+    const ready = Promise.race([
       Promise.allSettled(preload),
       new Promise((res) => setTimeout(res, 4500)),
-    ]).then(() => {
-      // the loading beat only plays once; filter changes rebuild instantly
-      const wait = firstLoadRef.current
-        ? Math.max(0, MIN_LOAD_MS - (performance.now() - started))
-        : 0;
-      firstLoadRef.current = false;
-      setTimeout(() => {
+    ]);
+    const dismissed = new Promise<void>((res) => {
+      if (introClosed.current.done) res();
+      else introClosed.current.wake = res;
+    });
+    let cancelled = false;
+    dismissed
+      .then(() =>
+        Promise.race([ready, new Promise((res) => setTimeout(res, REVEAL_GRACE_MS))])
+      )
+      .then(() => {
         if (cancelled) return;
         setLoaded(true);
         eng.reveal();
         eng.start();
-      }, wait);
-    });
+      });
 
     // wheel must be non-passive so the page never scrolls
     const surface = surfaceRef.current;
@@ -303,6 +318,19 @@ export function Viewer() {
     setGridCols(cols);
     engineRef.current?.setGridCols(cols);
   };
+
+  // phones have no Scatter tab (its hover/toss/hold play fights touch
+  // scrolling): if the window narrows to phone width mid-scatter, go to grid
+  useEffect(() => {
+    if (mode !== "scatter") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const leave = () => {
+      if (mq.matches) changeMode("grid");
+    };
+    leave();
+    mq.addEventListener("change", leave);
+    return () => mq.removeEventListener("change", leave);
+  }, [mode]);
 
   // first paint: put Safari's chrome in step with the header/desk
   useEffect(() => {
@@ -396,234 +424,237 @@ export function Viewer() {
   }>({ pts: new Map(), startDist: null });
 
   return (
-    <div
-      ref={surfaceRef}
-      className="viewer"
-      data-mode={mode}
-      onPointerDown={(e) => {
-        const eng = engineRef.current;
-        if (!eng) return;
-        // presses on UI controls must not start desk interactions or capture the pointer
-        if ((e.target as HTMLElement).closest("button, .nav-stack, .time-strip, .wall-rail, .title-slip, .story-backdrop, .bg-picker")) return;
-        const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
-        const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
-        eng.onPointerDown(e.clientX, e.clientY, idx);
-        press.current = { x: e.clientX, y: e.clientY, t: performance.now(), idx };
-        if (e.pointerType !== "mouse" && mode !== "scatter" && !eng.stackDragging) {
-          touchDrag.current = { lastY: e.clientY, lastT: e.timeStamp, vel: 0, pointerId: e.pointerId };
-        }
-        if (e.pointerType !== "mouse") {
-          const pn = pinch.current;
-          pn.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          if (pn.pts.size === 2) {
-            const [p1, p2] = [...pn.pts.values()];
-            pn.startDist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-            touchDrag.current = null; // a pinch is not a scroll
-            press.current = null; // ...and not a click
+    <>
+      <div
+        ref={surfaceRef}
+        className="viewer"
+        data-mode={mode}
+        onPointerDown={(e) => {
+          const eng = engineRef.current;
+          if (!eng) return;
+          // presses on UI controls must not start desk interactions or capture the pointer
+          if ((e.target as HTMLElement).closest("button, .nav-stack, .time-strip, .wall-rail, .title-slip, .story-backdrop, .bg-picker")) return;
+          const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
+          const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
+          eng.onPointerDown(e.clientX, e.clientY, idx);
+          press.current = { x: e.clientX, y: e.clientY, t: performance.now(), idx };
+          if (e.pointerType !== "mouse" && mode !== "scatter" && !eng.stackDragging) {
+            touchDrag.current = { lastY: e.clientY, lastT: e.timeStamp, vel: 0, pointerId: e.pointerId };
           }
-        }
-        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-      }}
-      onPointerMove={(e) => {
-        const eng = engineRef.current;
-        if (!eng) return;
-        // hovering the wall rail shouldn't pick up notes underneath it
-        if ((e.target as HTMLElement).closest?.(".wall-rail")) {
-          eng.pointerLeft();
-          return;
-        }
-        // active pinch: spread = bigger notes, squeeze = smaller (grid only)
-        const pn = pinch.current;
-        if (pn.pts.has(e.pointerId)) {
-          pn.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        }
-        if (pn.pts.size >= 2 && pn.startDist != null) {
-          const [p1, p2] = [...pn.pts.values()];
-          const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-          const ratio = d / pn.startDist;
-          if (mode === "grid") {
-            const SIZES = [7, 5, 3]; // S, M, L
-            const at = SIZES.indexOf(gridCols);
-            if (ratio > 1.35 && at >= 0 && at < SIZES.length - 1) {
-              changeGridCols(SIZES[at + 1]);
-              pn.startDist = d; // re-arm so a long spread can step twice
-            } else if (ratio < 0.74 && at > 0) {
-              changeGridCols(SIZES[at - 1]);
-              pn.startDist = d;
+          if (e.pointerType !== "mouse") {
+            const pn = pinch.current;
+            pn.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (pn.pts.size === 2) {
+              const [p1, p2] = [...pn.pts.values()];
+              pn.startDist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+              touchDrag.current = null; // a pinch is not a scroll
+              press.current = null; // ...and not a click
             }
           }
-          return; // pinch moves never feed the scroll physics
-        }
-        eng.onPointerMove(e.clientX, e.clientY);
-        const td = touchDrag.current;
-        if (td && td.pointerId === e.pointerId) {
-          const dy = td.lastY - e.clientY;
-          eng.onWheel(dy);
-          const dtMs = Math.max(1, e.timeStamp - td.lastT);
-          td.vel = td.vel * 0.7 + (dy / dtMs) * 1000 * 0.3;
-          td.lastY = e.clientY;
-          td.lastT = e.timeStamp;
-        }
-      }}
-      onPointerUp={(e) => {
-        const eng = engineRef.current;
-        eng?.onPointerUp();
-        pinch.current.pts.delete(e.pointerId);
-        if (pinch.current.pts.size < 2) pinch.current.startDist = null;
-        // touch release: hand the finger's velocity to the engine as
-        // kinetic momentum (iOS-style glide)
-        const td = touchDrag.current;
-        if (eng && td && td.pointerId === e.pointerId && Math.abs(td.vel) > 120) {
-          eng.fling(td.vel);
-        }
-        touchDrag.current = null;
-        // a quick, stationary press in grid mode is a click: zoom the note
-        const p = press.current;
-        press.current = null;
-        if (
-          eng &&
-          p &&
-          (mode === "grid" || mode === "wall") &&
-          performance.now() - p.t < 500 &&
-          Math.hypot(e.clientX - p.x, e.clientY - p.y) < 8
-        ) {
-          if (mode === "grid") eng.onGridClick(p.idx);
-          else eng.onWallClick(p.idx);
-        }
-      }}
-      onPointerCancel={(e) => {
-        engineRef.current?.onPointerUp();
-        touchDrag.current = null;
-        pinch.current.pts.delete(e.pointerId);
-        if (pinch.current.pts.size < 2) pinch.current.startDist = null;
-      }}
-      onPointerLeave={() => engineRef.current?.pointerLeft()}
-    >
-      <DeskSurface count={all.length} />
+          (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          const eng = engineRef.current;
+          if (!eng) return;
+          // hovering the wall rail shouldn't pick up notes underneath it
+          if ((e.target as HTMLElement).closest?.(".wall-rail")) {
+            eng.pointerLeft();
+            return;
+          }
+          // active pinch: spread = bigger notes, squeeze = smaller (grid only)
+          const pn = pinch.current;
+          if (pn.pts.has(e.pointerId)) {
+            pn.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          }
+          if (pn.pts.size >= 2 && pn.startDist != null) {
+            const [p1, p2] = [...pn.pts.values()];
+            const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+            const ratio = d / pn.startDist;
+            if (mode === "grid") {
+              const SIZES = [7, 5, 3]; // S, M, L
+              const at = SIZES.indexOf(gridCols);
+              if (ratio > 1.35 && at >= 0 && at < SIZES.length - 1) {
+                changeGridCols(SIZES[at + 1]);
+                pn.startDist = d; // re-arm so a long spread can step twice
+              } else if (ratio < 0.74 && at > 0) {
+                changeGridCols(SIZES[at - 1]);
+                pn.startDist = d;
+              }
+            }
+            return; // pinch moves never feed the scroll physics
+          }
+          eng.onPointerMove(e.clientX, e.clientY);
+          const td = touchDrag.current;
+          if (td && td.pointerId === e.pointerId) {
+            const dy = td.lastY - e.clientY;
+            eng.onWheel(dy);
+            const dtMs = Math.max(1, e.timeStamp - td.lastT);
+            td.vel = td.vel * 0.7 + (dy / dtMs) * 1000 * 0.3;
+            td.lastY = e.clientY;
+            td.lastT = e.timeStamp;
+          }
+        }}
+        onPointerUp={(e) => {
+          const eng = engineRef.current;
+          eng?.onPointerUp();
+          pinch.current.pts.delete(e.pointerId);
+          if (pinch.current.pts.size < 2) pinch.current.startDist = null;
+          // touch release: hand the finger's velocity to the engine as
+          // kinetic momentum (iOS-style glide)
+          const td = touchDrag.current;
+          if (eng && td && td.pointerId === e.pointerId && Math.abs(td.vel) > 120) {
+            eng.fling(td.vel);
+          }
+          touchDrag.current = null;
+          // a quick, stationary press in grid mode is a click: zoom the note
+          const p = press.current;
+          press.current = null;
+          if (
+            eng &&
+            p &&
+            (mode === "grid" || mode === "wall") &&
+            performance.now() - p.t < 500 &&
+            Math.hypot(e.clientX - p.x, e.clientY - p.y) < 8
+          ) {
+            if (mode === "grid") eng.onGridClick(p.idx);
+            else eng.onWallClick(p.idx);
+          }
+        }}
+        onPointerCancel={(e) => {
+          engineRef.current?.onPointerUp();
+          touchDrag.current = null;
+          pinch.current.pts.delete(e.pointerId);
+          if (pinch.current.pts.size < 2) pinch.current.startDist = null;
+        }}
+        onPointerLeave={() => engineRef.current?.pointerLeft()}
+      >
+        <DeskSurface count={all.length} />
 
-      <div className="thread-months" data-visible={mode === "timeline"} aria-hidden>
-        {monthMarks.map((m, k) => (
-          <span
-            key={m.label + m.i}
-            className="thread-month"
-            ref={(el) => {
-              monthRefs.current[k] = el;
-            }}
-          >
-            {m.label}
-          </span>
-        ))}
-      </div>
+        <div className="thread-months" data-visible={mode === "timeline"} aria-hidden>
+          {monthMarks.map((m, k) => (
+            <span
+              key={m.label + m.i}
+              className="thread-month"
+              ref={(el) => {
+                monthRefs.current[k] = el;
+              }}
+            >
+              {m.label}
+            </span>
+          ))}
+        </div>
 
-      <div className="notes-layer">
-        {drawings.map((d, i) => (
-          <NoteCard
-            key={d.id}
-            drawing={d}
-            index={i}
-            featured={featured.has(d.id)}
-            hires={mode === "grid" && gridCols <= 5}
-            num={numById.get(d.id) ?? 0}
-            attach={attach}
-          />
-        ))}
-        {drawings.length === 0 && (
-          <div className="empty-note">
-            <p>Drawings will appear here soon.</p>
-          </div>
-        )}
-      </div>
+        <div className="notes-layer">
+          {drawings.map((d, i) => (
+            <NoteCard
+              key={d.id}
+              drawing={d}
+              index={i}
+              featured={featured.has(d.id)}
+              hires={mode === "grid" && gridCols <= 5}
+              num={numById.get(d.id) ?? 0}
+              attach={attach}
+            />
+          ))}
+          {drawings.length === 0 && (
+            <div className="empty-note">
+              <p>Drawings will appear here soon.</p>
+            </div>
+          )}
+        </div>
 
-      <div className="nav-stack">
-        <ModeSelector mode={mode} onChange={changeMode} />
+        <div className="nav-stack">
+          <ModeSelector mode={mode} onChange={changeMode} />
+          {mode === "grid" && (
+            <div className="size-control" role="group" aria-label="Note size">
+            <div className="size-btn-row">
+              {([
+                { label: "S", cols: 7 },
+                { label: "M", cols: 5 },
+                { label: "L", cols: 3 },
+              ] as const).map((o) => (
+                <button
+                  key={o.label}
+                  className="size-btn"
+                  data-active={gridCols === o.cols}
+                  onClick={() => changeGridCols(o.cols)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            </div>
+          )}
+        </div>
+
         {mode === "grid" && (
-          <div className="size-control" role="group" aria-label="Note size">
-          <div className="size-btn-row">
-            {([
-              { label: "S", cols: 7 },
-              { label: "M", cols: 5 },
-              { label: "L", cols: 3 },
-            ] as const).map((o) => (
-              <button
-                key={o.label}
-                className="size-btn"
-                data-active={gridCols === o.cols}
-                onClick={() => changeGridCols(o.cols)}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-          </div>
+          <TimeStrip
+            ref={stripRef}
+            drawings={drawings}
+            numById={numById}
+            getLayout={() => gridLayoutRef.current}
+            onJump={(y) => engineRef.current?.setGridScrollTarget(y)}
+          />
         )}
+
+        {mode === "wall" && loaded && (
+          <WallRail
+            ref={wallRailRef}
+            drawings={drawings}
+            getLayout={() => wallLayoutRef.current}
+            onJump={(y) => engineRef.current?.setWallScrollTarget(y)}
+          />
+        )}
+
+        {mode === "grid" && gridZoom && drawings[gridZoom.idx] && (
+          <CaptionPill
+            d={drawings[gridZoom.idx]}
+            num={numById.get(drawings[gridZoom.idx].id)}
+            top={`calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)`}
+          />
+        )}
+
+        {mode === "wall" && wallOpen && drawings[wallOpen.idx] && (
+          <CaptionPill
+            d={drawings[wallOpen.idx]}
+            num={numById.get(drawings[wallOpen.idx].id)}
+            top={`calc(45% + ${Math.round(wallOpen.size / 2) + 18}px)`}
+          />
+        )}
+
+        <BackgroundPicker />
+
+        <MetadataPanel
+          drawing={focus != null ? drawings[focus] ?? null : null}
+          mode={mode}
+        />
+        {/* grid zoom and wall use the caption pill (wall: only when pinned);
+            the riding card stays for scatter's hold-to-inspect */}
+        <HoldMetadata
+          ref={holdTipRef}
+          drawing={
+            held != null && mode !== "grid" && mode !== "wall"
+              ? drawings[held] ?? null
+              : null
+          }
+        />
+
+        {(mode === "stack" || mode === "timeline" || mode === "scatter" || mode === "wall") &&
+          loaded && (
+            <div className="scroll-hint" key={mode}>
+              {mode === "stack"
+                ? "scroll to peel through the pad"
+                : mode === "timeline"
+                  ? "scroll to travel in time"
+                  : mode === "wall"
+                    ? "the wall parts around your hand — click to pin, scroll for more"
+                    : "hold a note to look closer — scroll for more"}
+            </div>
+          )}
       </div>
 
-      {mode === "grid" && (
-        <TimeStrip
-          ref={stripRef}
-          drawings={drawings}
-          numById={numById}
-          getLayout={() => gridLayoutRef.current}
-          onJump={(y) => engineRef.current?.setGridScrollTarget(y)}
-        />
-      )}
-
-      {mode === "wall" && loaded && (
-        <WallRail
-          ref={wallRailRef}
-          drawings={drawings}
-          getLayout={() => wallLayoutRef.current}
-          onJump={(y) => engineRef.current?.setWallScrollTarget(y)}
-        />
-      )}
-
-      {mode === "grid" && gridZoom && drawings[gridZoom.idx] && (
-        <CaptionPill
-          d={drawings[gridZoom.idx]}
-          num={numById.get(drawings[gridZoom.idx].id)}
-          top={`calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)`}
-        />
-      )}
-
-      {mode === "wall" && wallOpen && drawings[wallOpen.idx] && (
-        <CaptionPill
-          d={drawings[wallOpen.idx]}
-          num={numById.get(drawings[wallOpen.idx].id)}
-          top={`calc(45% + ${Math.round(wallOpen.size / 2) + 18}px)`}
-        />
-      )}
-
-      <BackgroundPicker />
-
-      <MetadataPanel
-        drawing={focus != null ? drawings[focus] ?? null : null}
-        mode={mode}
-      />
-      {/* grid zoom and wall use the caption pill (wall: only when pinned);
-          the riding card stays for scatter's hold-to-inspect */}
-      <HoldMetadata
-        ref={holdTipRef}
-        drawing={
-          held != null && mode !== "grid" && mode !== "wall"
-            ? drawings[held] ?? null
-            : null
-        }
-      />
-
-      {(mode === "stack" || mode === "timeline" || mode === "scatter" || mode === "wall") &&
-        loaded && (
-          <div className="scroll-hint" key={mode}>
-            {mode === "stack"
-              ? "scroll to peel"
-              : mode === "timeline"
-                ? "scroll to travel in time"
-                : mode === "wall"
-                  ? "the wall parts around your hand — click to pin, scroll for more"
-                  : "hold a note to look closer — scroll for more"}
-          </div>
-        )}
-
-      <LoadingExperience done={loaded} count={all.length} />
-    </div>
+      {/* outside the viewer, so presses and wheels on its scrim never reach the desk */}
+      <IntroNote count={all.length} onClose={onIntroClose} />
+    </>
   );
 }
