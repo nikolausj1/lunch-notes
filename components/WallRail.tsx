@@ -186,7 +186,8 @@ export const WallRail = forwardRef<
                 data-year={m.label}
                 style={{ top: `${(m.frac * 100).toFixed(3)}%` }}
               >
-                {m.label}
+                <span className="ty-full">{m.label}</span>
+                <span className="ty-short">&rsquo;{m.label!.slice(2)}</span>
               </span>
             </span>
           ) : (

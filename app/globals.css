@@ -640,6 +640,7 @@ body {
 .ts-tip[data-on="true"] { opacity: 1; }
 .ts-tip b { color: #3d6a99; }
 
+/* full vs two-digit year (Grid strip and Wall rail): phones get '26 */
 .ty-short { display: none; }
 
 @media (max-width: 640px) {
@@ -1013,7 +1014,9 @@ body {
 
 @media (max-width: 640px) {
   .wall-rail { top: 132px; bottom: 58px; right: 4px; width: 50px; }
-  .wr-ylabel { right: 20px; font-size: 8px; }
+  /* two-digit years ('26) leave room for a readable size */
+  .wr-ylabel { right: 20px; font-size: 11px; letter-spacing: 0; }
+  .wr-ylabel[data-on="true"] { font-size: 12.5px; }
 }
 
 /* while a moment is pinned open, the notes outrank the rail */
