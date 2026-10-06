@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { getDrawings } from "@/lib/drawings";
 import { syncThemeColor } from "@/lib/theme";
 import { LunchDrawing, ViewMode } from "@/lib/types";
@@ -55,6 +55,16 @@ function CaptionPill({
   );
 }
 
+/** phone width, matching the layouts' `vp.w < 640` (false on the server) */
+const PHONE_MQ = "(max-width: 639px)";
+function subscribePhone(onChange: () => void) {
+  const mq = window.matchMedia(PHONE_MQ);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+const isPhoneNow = () => window.matchMedia(PHONE_MQ).matches;
+const isPhoneOnServer = () => false;
+
 /** ?count=N keeps a recent slice (testing); default is the whole archive */
 function getCount(): number | undefined {
   if (typeof window === "undefined") return undefined;
@@ -73,7 +83,12 @@ export function Viewer() {
     return m;
   }, [all]);
   const [mode, setMode] = useState<ViewMode>("grid");
-  const [gridCols, setGridCols] = useState(5); // M is the default note size
+  // grid note size: the default is M on desktop and S (three across) on
+  // phones until the viewer picks one. The server renders M; React swaps in
+  // the phone default right after hydration, under the welcome note.
+  const isPhone = useSyncExternalStore(subscribePhone, isPhoneNow, isPhoneOnServer);
+  const [gridColsChoice, setGridColsChoice] = useState<number | null>(null);
+  const gridCols = gridColsChoice ?? (isPhone ? 7 : 5);
   const [focus, setFocus] = useState<number | null>(null);
   const [held, setHeld] = useState<number | null>(null);
   // grid click-to-zoom: index + on-screen size of the open note (drives the caption pill)
@@ -213,11 +228,13 @@ export function Viewer() {
     if (surfaceRef.current) ro.observe(surfaceRef.current);
 
     // preload behind the welcome note (PRD §16): thumbnails for the newest
-    // notes, plus the full-size images the default grid (size M) shows on its
-    // first screen. Grid and Wall show the NEWEST drawings first.
+    // notes, plus, on desktop, the full-size images the default grid (size M)
+    // shows on its first screen. Phones open on S, which shows thumbnails.
+    // Grid and Wall show the NEWEST drawings first.
+    const phone = window.innerWidth < 640;
     const preload = [
       ...drawings.slice(-160).map((d) => d.thumbSrc),
-      ...drawings.slice(-20).map((d) => d.imageSrc),
+      ...(phone ? [] : drawings.slice(-20).map((d) => d.imageSrc)),
     ].map(
       (src) =>
         new Promise<void>((res) => {
@@ -315,9 +332,15 @@ export function Viewer() {
   };
 
   const changeGridCols = (cols: number) => {
-    setGridCols(cols);
+    setGridColsChoice(cols);
     engineRef.current?.setGridCols(cols);
   };
+
+  // keep the engine on the size the controls show (the phone default lands
+  // one render after hydration)
+  useEffect(() => {
+    engineRef.current?.setGridCols(gridCols);
+  }, [gridCols]);
 
   // phones have no Scatter tab (its hover/toss/hold play fights touch
   // scrolling): if the window narrows to phone width mid-scatter, go to grid
