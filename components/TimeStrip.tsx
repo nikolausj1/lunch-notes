@@ -102,10 +102,15 @@ export const TimeStrip = forwardRef<
     return 0;
   };
 
+  // phones run a slim strip (CSS): shorter ticks, bulge and magnify, so the
+  // ink range stays in its gutter instead of reaching over the photos
+  const isCompact = (rail: HTMLElement) => rail.clientWidth < 40;
+
   const applyInk = () => {
     const rail = railRef.current;
     const g = geom.current;
     if (!rail || !g) return;
+    const compact = isCompact(rail);
     // the indicator is a bulge in RAIL space: centered on the visible
     // range, never narrower than a handful of ticks so the curve reads
     const fa = railFracFor(win.current.top);
@@ -118,9 +123,9 @@ export const TimeStrip = forwardRef<
       if (Math.abs(d) <= 1.25) {
         // cosine falloff: longest at center, tapering at the ends
         const bulge = Math.cos(Math.max(-1, Math.min(1, d)) * Math.PI * 0.5);
-        const base = el.dataset.jan === "true" ? 20 : 11;
+        const base = el.dataset.jan === "true" ? (compact ? 11 : 20) : compact ? 6 : 11;
         // one smooth silhouette: the curve sets the length, not the base
-        el.style.width = Math.max(base, 8 + bulge * 30) + "px";
+        el.style.width = Math.max(base, compact ? 5 + bulge * 12 : 8 + bulge * 30) + "px";
         el.dataset.on = String(bulge > 0.12);
         el.dataset.bulge = bulge.toFixed(2); // hover magnify eases off here
       } else {
@@ -210,6 +215,7 @@ export const TimeStrip = forwardRef<
     if (!rail || !g) return;
     const r = rail.getBoundingClientRect();
     const f = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
+    const compact = isCompact(rail);
     // magnify ticks near the cursor — length only (scaleX), thickness
     // never changes. The magnification is ADDITIVE in pixels (not a
     // multiplier), so ticks already extended by the position bulge don't
@@ -221,8 +227,8 @@ export const TimeStrip = forwardRef<
       if (k <= 0.03) { el.style.transform = ""; return; }
       const bulge = Number(el.dataset.bulge || 0);
       const current = parseFloat(el.style.width) ||
-        (el.dataset.jan === "true" ? 20 : 11);
-      const addPx = k * 40 * (1 - 0.5 * bulge);
+        (el.dataset.jan === "true" ? (compact ? 11 : 20) : compact ? 6 : 11);
+      const addPx = k * (compact ? 20 : 40) * (1 - 0.5 * bulge);
       el.style.transform = `scaleX(${1 + addPx / current})`;
     });
     // readout + jump target: the rail is a uniform calendar axis, so the
@@ -276,7 +282,8 @@ export const TimeStrip = forwardRef<
       ))}
       {ticks.filter((t) => t.jan).map((t) => (
         <span key={"y" + t.key} className="ts-year" style={{ top: fracOf(t) * 100 + "%" }}>
-          {t.year}
+          <span className="ty-full">{t.year}</span>
+          <span className="ty-short">&rsquo;{t.year.slice(2)}</span>
         </span>
       ))}
       <div className="ts-tip" ref={tipRef} data-on="false" />

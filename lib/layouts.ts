@@ -77,24 +77,30 @@ export function gridTargets(
   vp: Viewport,
   wantedCols = 5
 ): { targets: NoteTarget[]; info: GridInfo } {
-  const pad = Math.max(20, vp.w * 0.04);
-  // phones reserve a right gutter so notes never run under the time strip
-  const padR = vp.w < 640 ? pad + 38 : pad;
-  const topSafe = vp.w < 640 ? 168 : 108; // clear the stacked mobile chrome
-  const gap = vp.w < 640 ? 14 : 24;
-  // phones remap S/M/L to their own column counts (4/3/2) — otherwise all
+  const phone = vp.w < 640;
+  // phones run tight margins plus a slim right gutter so notes never run
+  // under the time strip
+  const pad = phone ? 14 : Math.max(20, vp.w * 0.04);
+  const padR = phone ? 34 : pad;
+  const topSafe = phone ? 168 : 108; // clear the stacked mobile chrome
+  const gap = phone ? 14 : 24;
+  // phones remap S/M/L to their own column counts (3/2/1) — otherwise all
   // three sizes clamp to the same layout and the control does nothing
-  const wanted =
-    vp.w < 640 ? (wantedCols >= 7 ? 4 : wantedCols >= 5 ? 3 : 2) : wantedCols;
+  const wanted = phone ? (wantedCols >= 7 ? 3 : wantedCols >= 5 ? 2 : 1) : wantedCols;
   // honor the size control, but never let cells get unusably small
-  const minCell = vp.w < 640 ? 56 : 72;
-  const maxCols = Math.max(2, Math.floor((vp.w - pad - padR + gap) / (minCell + gap)));
-  const cols = Math.max(2, Math.min(wanted, maxCols));
+  const minCell = phone ? 56 : 72;
+  const minCols = phone ? 1 : 2;
+  const maxCols = Math.max(minCols, Math.floor((vp.w - pad - padR + gap) / (minCell + gap)));
+  const cols = Math.max(minCols, Math.min(wanted, maxCols));
   const cell = (vp.w - pad - padR - gap * (cols - 1)) / cols;
 
   const base = baseNoteSize(vp);
   const n = drawings.length;
-  const labelRoom = Math.max(24, cell * 0.17);
+  // room under each cell for its date label (which scales with the cell);
+  // capped on phones so a one-column grid doesn't open wide empty bands
+  const labelRoom = phone
+    ? Math.min(40, Math.max(24, cell * 0.17))
+    : Math.max(24, cell * 0.17);
   const targets = drawings.map((d, i) => {
     const k = n - 1 - i; // newest first in the grid
     const col = k % cols;
@@ -191,6 +197,8 @@ export type WallTuning = {
 };
 
 export const WALL_TUNING_DEFAULT: WallTuning = { size: 0.9, hGap: 9, vGap: 12 };
+/** phones: notes 25% larger than desktop's tuning, same gaps */
+export const WALL_TUNING_PHONE: WallTuning = { ...WALL_TUNING_DEFAULT, size: 1.125 };
 
 /**
  * The wall (Moments-inspired): every note pinned in horizontal rows that
@@ -204,7 +212,7 @@ export function wallTargets(
   drawings: LunchDrawing[],
   vp: Viewport,
   drift = 0,
-  tune: WallTuning = WALL_TUNING_DEFAULT
+  tune: WallTuning = vp.w < 640 ? WALL_TUNING_PHONE : WALL_TUNING_DEFAULT
 ): { targets: NoteTarget[]; info: WallInfo } {
   const n = Math.max(1, drawings.length);
   const base = baseNoteSize(vp);
@@ -213,7 +221,13 @@ export function wallTargets(
   const note = base * tune.size;
   const cellH = note + tune.vGap;
   const pitch = note + tune.hGap;
-  const perRow = Math.max(3, Math.round(vp.w / pitch) + 1);
+  // phones: exactly enough notes per ring to span the screen plus the
+  // offscreen overhang, so cells are one pitch wide and the gap is hGap
+  // (rounding instead pads each cell, which reads as wider spacing)
+  const perRow =
+    vp.w < 640
+      ? Math.max(3, Math.ceil((vp.w + note * 1.2) / pitch))
+      : Math.max(3, Math.round(vp.w / pitch) + 1);
   const rows = Math.max(2, Math.ceil(n / perRow));
   // spread notes across rows as evenly as possible (first rows get extras)
   const baseCount = Math.floor(n / rows);

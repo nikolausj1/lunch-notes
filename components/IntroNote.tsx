@@ -125,6 +125,7 @@ export function IntroNote({ count, onClose }: { count: number; onClose: () => vo
             <p className="intro-count">{count.toLocaleString()} and counting</p>
             <button ref={goRef} className="intro-go" onClick={close}>
               Open the Lunchbox
+              <span aria-hidden="true">&rarr;</span>
             </button>
           </div>
         </div>
