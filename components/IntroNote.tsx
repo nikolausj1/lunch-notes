@@ -88,12 +88,14 @@ export function IntroNote({ count, onClose }: { count: number; onClose: () => vo
 
   useEffect(() => {
     if (phase !== "open") return;
-    goRef.current?.focus({ preventScroll: true });
+    // focus the note itself, not its button: screen readers start at the
+    // story, and phones don't draw a focus ring around the button on load
+    noteRef.current?.focus({ preventScroll: true });
     // the note is modal: keys never reach the desk beneath (Escape would
     // otherwise also close a shared drawing waiting under the note)
     const onKey = (e: KeyboardEvent) => {
       e.stopImmediatePropagation();
-      if (e.key === "Escape") {
+      if (e.key === "Escape" || e.key === "Enter") {
         e.preventDefault();
         close();
       } else if (e.key === "Tab") {
@@ -113,6 +115,7 @@ export function IntroNote({ count, onClose }: { count: number; onClose: () => vo
         ref={noteRef}
         className="intro-note"
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby="intro-title"
         onClick={(e) => e.stopPropagation()}

@@ -1287,8 +1287,8 @@ html[data-desk-dark] .desk {
   color: var(--ink-soft);
 }
 
-/* outline pill (chosen 2026-10-06 from ten mockups): a thin ink outline
-   that fills with ink on hover, so the story leads */
+/* ink pill (the outline-pill mockup, reversed at Justin's request
+   2026-10-06): light text on ink, deepening on hover */
 .intro-go {
   flex-shrink: 0;
   display: inline-flex;
@@ -1302,27 +1302,33 @@ html[data-desk-dark] .desk {
   font-size: 15px;
   font-weight: 700;
   line-height: 1.2;
-  color: var(--ink);
-  background: transparent;
+  color: var(--paper);
+  background: var(--ink);
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .intro-go span { transition: transform 0.15s ease; }
 
 .intro-go:hover {
-  background-color: var(--ink);
-  color: var(--paper);
+  background-color: #2c2822;
+  border-color: #2c2822;
 }
 
 .intro-go:hover span { transform: translateX(3px); }
 
-.intro-go:active { background-color: #2c2822; }
+.intro-go:active { background-color: #1f1c18; border-color: #1f1c18; }
 
+/* keyboard only (Tab): an ink ring, never the browser's blue */
+.intro-go:focus { outline: none; }
 .intro-go:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
+
+/* the note takes focus when it opens; it needs no ring of its own */
+.intro-note:focus { outline: none; }
 
 @media (max-width: 640px) {
   .intro-note { padding: 26px 22px 20px; }
