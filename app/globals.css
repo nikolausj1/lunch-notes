@@ -1266,10 +1266,11 @@ html[data-desk-dark] .desk {
   color: var(--ink);
 }
 
+/* the story is set in the UI face (as on the title slip): several lines
+   of handwriting were hard to read; the title above stays handwritten */
 .intro-story {
-  font-family: var(--font-hand), cursive;
-  font-size: 23px;
-  line-height: 1.4;
+  font-size: 17px;
+  line-height: 1.65;
   margin: 0;
   color: var(--ink);
 }
@@ -1337,7 +1338,7 @@ html[data-desk-dark] .desk {
   .intro-note { padding: 26px 22px 20px; }
   /* phones read it at arm's length: a bigger hand than desktop's */
   .intro-note h2 { font-size: 34px; margin-bottom: 12px; }
-  .intro-story { font-size: 24px; line-height: 1.38; }
+  .intro-story { font-size: 18px; line-height: 1.6; }
   .intro-count { font-size: 12px; }
   /* the count gets its own line; the button spans the note (easy thumb target) */
   .intro-foot {
