@@ -3944,7 +3944,8 @@
 "tags": [
 "Robots",
 "Pixar"
-]
+],
+"series": "WALL-E"
 },
 {
 "id": "db9d40a04f8",
@@ -3957,7 +3958,8 @@
 "tags": [
 "Robots",
 "Pixar"
-]
+],
+"series": "WALL-E"
 },
 {
 "id": "d7171cec40b",
@@ -4339,11 +4341,12 @@
 "date": "2021-09-20",
 "dateSource": "written",
 "child": "Chase",
-"title": "Heihei The Rooster",
+"title": "Chicken Joe",
 "tags": [
 "Disney",
 "Birds"
-]
+],
+"series": "Surf's Up"
 },
 {
 "id": "dbac26d182e",
@@ -4814,7 +4817,8 @@
 "tags": [
 "Pixar",
 "Characters"
-]
+],
+"series": "A Bug's Life"
 },
 {
 "id": "d5719cdcdb6",
@@ -5106,7 +5110,8 @@
 "tags": [
 "Pixar",
 "Monsters"
-]
+],
+"series": "Monsters, Inc."
 },
 {
 "id": "d61a96444a6",
@@ -5119,7 +5124,8 @@
 "tags": [
 "Monsters",
 "Pixar"
-]
+],
+"series": "Monsters, Inc."
 },
 {
 "id": "d76637aff37",
@@ -5954,7 +5960,8 @@
 "tags": [
 "Disney",
 "Animals"
-]
+],
+"series": "Tangled"
 },
 {
 "id": "da31cdb038c",
@@ -6123,7 +6130,7 @@
 "Dogs",
 "Characters"
 ],
-"series": "Paw Patrol"
+"series": "Octonauts"
 },
 {
 "id": "d00f1c0bd3b",
@@ -7130,7 +7137,8 @@
 "title": "Bunny Ears Kid",
 "tags": [
 "Characters"
-]
+],
+"series": "Octonauts"
 },
 {
 "id": "d395d3bfa1e",
@@ -7712,7 +7720,8 @@
 "tags": [
 "Ocean",
 "Characters"
-]
+],
+"series": "Octonauts"
 },
 {
 "id": "ddc611750dc",
@@ -10945,7 +10954,8 @@
 "title": "Backwards Cap Kid",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "dae169944cf",
@@ -10957,7 +10967,8 @@
 "title": "Backwards Cap Kid",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "d8b96f64782",
@@ -11140,7 +11151,8 @@
 "title": "Mustached Officer",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "d2e1b841476",
@@ -11231,7 +11243,8 @@
 "tags": [
 "Animals",
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "dc072b349c4",
@@ -11244,7 +11257,8 @@
 "tags": [
 "Characters",
 "Animals"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "d0a5d69c9b6",
@@ -11256,7 +11270,8 @@
 "title": "Laughing Ponytail Girl",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "dc24aa9055e",
@@ -11268,7 +11283,8 @@
 "title": "Utterly Shocked Guy",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "d7538e7eec6",
@@ -11280,7 +11296,8 @@
 "title": "Shield-Bearing Adventurer",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "db160943950",
@@ -12687,7 +12704,8 @@
 "title": "Smiling Young Adventurer",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "dd0064be26b",
@@ -12727,7 +12745,8 @@
 "title": "Spiky-Haired Boy",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "d9cadfd4b50",
@@ -12739,7 +12758,8 @@
 "title": "Sassy Ponytail Girl",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "dbcb96fe3f1",
@@ -12780,7 +12800,8 @@
 "title": "Star Shirt Girl",
 "tags": [
 "Characters"
-]
+],
+"series": "Wild Kratts"
 },
 {
 "id": "d4efc311f83",
@@ -13147,7 +13168,8 @@
 "title": "Beret Sergeant Bulldog",
 "tags": [
 "Characters"
-]
+],
+"series": "Ricky Ricotta"
 },
 {
 "id": "d2da5d0f957",
@@ -13502,10 +13524,11 @@
 "date": "2023-10-25",
 "dateSource": "written",
 "child": "Chase",
-"title": "Goggle Punk Portrait",
+"title": "Robot",
 "tags": [
 "Characters"
-]
+],
+"series": "Ricky Ricotta"
 },
 {
 "id": "de81278ba32",
@@ -13732,7 +13755,7 @@
 "date": "2023-11-08",
 "dateSource": "written",
 "child": "Chase",
-"title": "Masked Squirrel Hero",
+"title": "Chip",
 "tags": [
 "Animals",
 "Characters"
@@ -14088,7 +14111,8 @@
 "title": "Grinning Glasses Kid",
 "tags": [
 "Characters"
-]
+],
+"series": "The Mitchells vs. the Machines"
 },
 {
 "id": "d88c3423956",
@@ -14279,10 +14303,11 @@
 "date": "2023-12-15",
 "dateSource": "written",
 "child": "Chase",
-"title": "Wavy Haired Hero",
+"title": "Walter Beckett",
 "tags": [
 "Characters"
-]
+],
+"series": "Spies in Disguise"
 },
 {
 "id": "d990b64f112",
@@ -14543,7 +14568,8 @@
 "title": "Hooded Wanderer",
 "tags": [
 "Characters"
-]
+],
+"series": "Star Wars"
 },
 {
 "id": "d55ff7e45b8",
@@ -14565,10 +14591,11 @@
 "date": "2024-01-16",
 "dateSource": "written",
 "child": "Chase",
-"title": "Shocked Bowl Cut Boy",
+"title": "Vector",
 "tags": [
 "Characters"
-]
+],
+"series": "Minions"
 },
 {
 "id": "d4b79c82e3b",
@@ -14609,7 +14636,8 @@
 "tags": [
 "Birds",
 "Characters"
-]
+],
+"series": "Migration"
 },
 {
 "id": "d551bf9890d",
@@ -14802,7 +14830,8 @@
 "tags": [
 "Movies",
 "Characters"
-]
+],
+"series": "Willy Wonka"
 },
 {
 "id": "ded97f1ec2f",
@@ -14815,7 +14844,8 @@
 "tags": [
 "Characters",
 "Movies"
-]
+],
+"series": "Willy Wonka"
 },
 {
 "id": "d0b0d65fbdd",
@@ -14987,11 +15017,12 @@
 "date": "2024-02-07",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Dapper Mouse",
+"title": "Geronimo Stilton",
 "tags": [
 "Animals",
 "Characters"
-]
+],
+"series": "Geronimo Stilton"
 },
 {
 "id": "d4a6c256202",
@@ -15000,11 +15031,12 @@
 "date": "2024-02-07",
 "dateSource": "written",
 "child": "Chase",
-"title": "Dapper Suit Mouse",
+"title": "Geronimo Stilton",
 "tags": [
 "Animals",
 "Characters"
-]
+],
+"series": "Geronimo Stilton"
 },
 {
 "id": "d07e10b6972",
@@ -15460,12 +15492,13 @@
 "date": "2024-03-14",
 "dateSource": "written",
 "child": "Chase",
-"title": "Kenai the Bear",
+"title": "Grizzy",
 "tags": [
 "Disney",
 "Animals",
 "Movies"
-]
+],
+"series": "Grizzy & the Lemmings"
 },
 {
 "id": "d879d6eb528",
@@ -15502,7 +15535,8 @@
 "title": "Smirking Hero Kid",
 "tags": [
 "Characters"
-]
+],
+"series": "Nimona"
 },
 {
 "id": "d80a73f0d0e",
@@ -15515,7 +15549,8 @@
 "tags": [
 "Characters",
 "Movies"
-]
+],
+"series": "Nimona"
 },
 {
 "id": "d5399224287",
@@ -15527,7 +15562,8 @@
 "title": "Grinning Punk Villain",
 "tags": [
 "Characters"
-]
+],
+"series": "Nimona"
 },
 {
 "id": "deff2c165fd",
@@ -15540,7 +15576,8 @@
 "tags": [
 "Characters",
 "Monsters"
-]
+],
+"series": "Nimona"
 },
 {
 "id": "d0bee3dfe44",
@@ -15737,7 +15774,8 @@
 "tags": [
 "Robots",
 "Characters"
-]
+],
+"series": "StoryBots"
 },
 {
 "id": "d7e60cc919e",
@@ -15927,10 +15965,11 @@
 "date": "2024-04-15",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Grinning Glasses Boy",
+"title": "Vector",
 "tags": [
 "Characters"
-]
+],
+"series": "Minions"
 },
 {
 "id": "d8a505a722e",
@@ -15939,10 +15978,11 @@
 "date": "2024-04-15",
 "dateSource": "written",
 "child": "Chase",
-"title": "Shocked Glasses Kid",
+"title": "Vector",
 "tags": [
 "Characters"
-]
+],
+"series": "Minions"
 },
 {
 "id": "d035f71d0bd",
@@ -15977,11 +16017,12 @@
 "date": "2024-04-17",
 "dateSource": "written",
 "child": "Chase",
-"title": "Apple Costume Kid",
+"title": "Vector",
 "tags": [
 "Characters",
 "Food"
-]
+],
+"series": "Minions"
 },
 {
 "id": "df3d7dd410e",
@@ -15990,10 +16031,11 @@
 "date": "2024-04-17",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Couch Peek Grin",
+"title": "Vector",
 "tags": [
 "Characters"
-]
+],
+"series": "Minions"
 },
 {
 "id": "dcef622bd3d",
@@ -16028,10 +16070,11 @@
 "date": "2024-04-19",
 "dateSource": "written",
 "child": "Vinny",
-"title": "The Big Scream",
+"title": "Vector",
 "tags": [
 "Characters"
-]
+],
+"series": "Minions"
 },
 {
 "id": "dc18b52d5be",
@@ -16040,10 +16083,11 @@
 "date": "2024-04-19",
 "dateSource": "written",
 "child": "Chase",
-"title": "Rainy Day Dash",
+"title": "Vector",
 "tags": [
 "Characters"
-]
+],
+"series": "Minions"
 },
 {
 "id": "ddbb407402e",
@@ -16554,7 +16598,7 @@
 "date": "2024-05-17",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Dragon Duo",
+"title": "Barf and Belch",
 "tags": [
 "Dragons",
 "Movies"
@@ -17050,7 +17094,8 @@
 "tags": [
 "Vehicles",
 "Characters"
-]
+],
+"series": "Blaze and the Monster Machines"
 },
 {
 "id": "d7bfec6c0f2",
@@ -17063,7 +17108,8 @@
 "tags": [
 "Vehicles",
 "Characters"
-]
+],
+"series": "Blaze and the Monster Machines"
 },
 {
 "id": "d013dc20a7a",
@@ -17997,7 +18043,8 @@
 "tags": [
 "Video Games",
 "Characters"
-]
+],
+"series": "Zelda"
 },
 {
 "id": "d9a54dd5486",
@@ -18495,7 +18542,8 @@
 "title": "Hylian Shield",
 "tags": [
 "Video Games"
-]
+],
+"series": "Zelda"
 },
 {
 "id": "de134e43650",
@@ -19062,7 +19110,8 @@
 "title": "Beanie Boy Smile",
 "tags": [
 "Characters"
-]
+],
+"series": "Where's Waldo?"
 },
 {
 "id": "dc60cae155a",
@@ -19074,7 +19123,8 @@
 "title": "Waldo",
 "tags": [
 "Characters"
-]
+],
+"series": "Where's Waldo?"
 },
 {
 "id": "d0140a84d50",
@@ -19176,10 +19226,11 @@
 "date": "2024-11-21",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Big Guy Tiny Chair",
+"title": "Aunt Marge",
 "tags": [
 "Characters"
-]
+],
+"series": "Harry Potter"
 },
 {
 "id": "d2adc6d6902",
@@ -19359,7 +19410,8 @@
 "title": "Stern Flat-Top Fellow",
 "tags": [
 "Characters"
-]
+],
+"series": "Home Alone"
 },
 {
 "id": "df244d16e66",
@@ -19453,10 +19505,11 @@
 "date": "2024-12-09",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Smiling Glasses Kid",
+"title": "Fuller",
 "tags": [
 "Characters"
-]
+],
+"series": "Home Alone"
 },
 {
 "id": "d2869a142db",
@@ -19469,7 +19522,8 @@
 "tags": [
 "Movies",
 "Characters"
-]
+],
+"series": "Home Alone"
 },
 {
 "id": "db80b8ae0a1",
@@ -19481,7 +19535,8 @@
 "title": "Startled Lady",
 "tags": [
 "Characters"
-]
+],
+"series": "Home Alone"
 },
 {
 "id": "d30dd69956f",
@@ -19521,7 +19576,8 @@
 "title": "Startled Blushing Fellow",
 "tags": [
 "Characters"
-]
+],
+"series": "Home Alone"
 },
 {
 "id": "db6869d5fc2",
@@ -19533,7 +19589,8 @@
 "title": "Wide-Eyed Wonder Man",
 "tags": [
 "Characters"
-]
+],
+"series": "Home Alone"
 },
 {
 "id": "d2a5bb7390c",
@@ -19787,7 +19844,8 @@
 "tags": [
 "Disney",
 "Characters"
-]
+],
+"series": "The Lion King"
 },
 {
 "id": "d839540cf31",
@@ -21435,7 +21493,8 @@
 "tags": [
 "Robots",
 "Movies"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "dee6615c8da",
@@ -21448,7 +21507,8 @@
 "tags": [
 "Robots",
 "Movies"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "d6302e6506b",
@@ -21460,7 +21520,8 @@
 "title": "Wistful Boy Portrait",
 "tags": [
 "Characters"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "da6a704348d",
@@ -21472,7 +21533,8 @@
 "title": "Charming Smirk",
 "tags": [
 "Characters"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "d5cb55d1d79",
@@ -21484,7 +21546,8 @@
 "title": "Bright Idea Boy",
 "tags": [
 "Characters"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "db154271821",
@@ -21496,7 +21559,8 @@
 "title": "Friendly Waving Boy",
 "tags": [
 "Characters"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "d2677b524e2",
@@ -21508,7 +21572,8 @@
 "title": "Smirking Hero Portrait",
 "tags": [
 "Characters"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "dbbec2eda9e",
@@ -21520,7 +21585,8 @@
 "title": "Pompadour Smirk",
 "tags": [
 "Characters"
-]
+],
+"series": "The Iron Giant"
 },
 {
 "id": "d150b9b6fa4",
@@ -21557,11 +21623,12 @@
 "date": "2025-05-06",
 "dateSource": "written",
 "child": "Chase",
-"title": "Maleficent Dragon",
+"title": "Sleeping Queens Dragon",
 "tags": [
 "Dragons",
 "Disney"
-]
+],
+"series": "Sleeping Queens"
 },
 {
 "id": "d3f5900d9ef",
@@ -22202,7 +22269,8 @@
 "tags": [
 "Characters",
 "Movies"
-]
+],
+"series": "The Lord of the Rings"
 },
 {
 "id": "dbf91b96708",
@@ -22364,7 +22432,8 @@
 "title": "Shimmer And Shine",
 "tags": [
 "Characters"
-]
+],
+"series": "Shimmer and Shine"
 },
 {
 "id": "d94da818673",
@@ -23345,7 +23414,8 @@
 "title": "Pixel Viking Warrior",
 "tags": [
 "Video Games"
-]
+],
+"series": "Trapped in a Video Game"
 },
 {
 "id": "daba6a1e348",
@@ -23358,7 +23428,8 @@
 "tags": [
 "Characters",
 "Space"
-]
+],
+"series": "Trapped in a Video Game"
 },
 {
 "id": "de0ea00a3ea",
@@ -23501,10 +23572,11 @@
 "date": "2025-10-14",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Cute Crossbow",
+"title": "PKE Meter",
 "tags": [
 "Video Games"
-]
+],
+"series": "Ghostbusters"
 },
 {
 "id": "d2453b9f720",
@@ -23595,10 +23667,11 @@
 "date": "2025-10-18",
 "dateSource": "written",
 "child": "Chase",
-"title": "Spiky Mystery Tool",
+"title": "PKE Meter",
 "tags": [
 "Video Games"
-]
+],
+"series": "Ghostbusters"
 },
 {
 "id": "d336124534a",
@@ -23631,10 +23704,11 @@
 "date": "2025-10-21",
 "dateSource": "written",
 "child": "Chase",
-"title": "Brooding Portrait Study",
+"title": "Snape",
 "tags": [
 "Characters"
-]
+],
+"series": "Harry Potter"
 },
 {
 "id": "de53b8ca889",
@@ -23643,10 +23717,11 @@
 "date": "2025-10-21",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Brooding Portrait",
+"title": "Snape",
 "tags": [
 "Characters"
-]
+],
+"series": "Harry Potter"
 },
 {
 "id": "d2393466466",
@@ -24072,7 +24147,8 @@
 "tags": [
 "Cats",
 "Characters"
-]
+],
+"series": "Klawde"
 },
 {
 "id": "d6cfef0ec53",
@@ -24245,7 +24321,8 @@
 "Cats",
 "Dogs",
 "Characters"
-]
+],
+"series": "Klawde"
 },
 {
 "id": "d7353120249",
@@ -24437,11 +24514,12 @@
 "date": "2025-12-12",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Business Bunny",
+"title": "Creepy Carrots",
 "tags": [
 "Animals",
 "Characters"
-]
+],
+"series": "Creepy Carrots"
 },
 {
 "id": "de2b8599107",
@@ -24800,7 +24878,8 @@
 "tags": [
 "Characters",
 "Video Games"
-]
+],
+"series": "Trapped in a Video Game"
 },
 {
 "id": "d7f6d639318",
@@ -25639,7 +25718,8 @@
 "tags": [
 "Animals",
 "Characters"
-]
+],
+"series": "Zootopia"
 },
 {
 "id": "dd142b2211f",
@@ -25688,11 +25768,12 @@
 "date": "2026-03-19",
 "dateSource": "written",
 "child": "Vinny",
-"title": "Majestic Horse",
+"title": "Mayor Winddancer",
 "tags": [
 "Animals",
 "Characters"
-]
+],
+"series": "Zootopia"
 },
 {
 "id": "de11d6feb28",
@@ -25701,11 +25782,12 @@
 "date": "2026-03-19",
 "dateSource": "written",
 "child": "Chase",
-"title": "Dapper Horse",
+"title": "Mayor Winddancer",
 "tags": [
 "Animals",
 "Characters"
-]
+],
+"series": "Zootopia"
 },
 {
 "id": "d8164fb1a8e",
@@ -26027,7 +26109,8 @@
 "tags": [
 "Movies",
 "Characters"
-]
+],
+"series": "Men in Black"
 },
 {
 "id": "dbbbd02b9be",
@@ -26040,7 +26123,8 @@
 "tags": [
 "Movies",
 "Characters"
-]
+],
+"series": "Men in Black"
 },
 {
 "id": "d018b4f276e",
@@ -26344,10 +26428,11 @@
 "date": "2026-04-30",
 "dateSource": "written",
 "child": "Chase",
-"title": "Bob Haircut Portrait",
+"title": "Chef Colette",
 "tags": [
 "Characters"
-]
+],
+"series": "Ratatouille"
 },
 {
 "id": "df7735d0b62",
