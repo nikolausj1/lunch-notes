@@ -182,9 +182,10 @@ body {
     left: 0;
     right: 0;
     /* paper extends under the iPhone status bar when running edge-to-edge */
-    padding: calc(9px + env(safe-area-inset-top, 0px)) 12px 7px;
+    /* left-aligned, with room at the right for the two corner circles */
+    padding: calc(9px + env(safe-area-inset-top, 0px)) 92px 7px 14px;
     transform: none;
-    text-align: center;
+    text-align: left;
     box-shadow:
       0 1px 2px rgba(80, 65, 40, 0.14),
       0 3px 10px rgba(80, 65, 40, 0.12);
@@ -512,7 +513,7 @@ body {
   font-size: 13.5px;
   font-weight: 600;
   color: var(--ink);
-  max-width: min(92vw, 560px);
+  max-width: min(92vw, 640px);
   text-align: center;
   pointer-events: none;
   animation: pill-in 0.3s ease 0.14s backwards;
@@ -748,6 +749,13 @@ body {
   pointer-events: none;
 }
 
+/* the label chips are buttons: they take clicks even though the caption
+   surfaces around them (this panel, the zoom pill) let every press through */
+.zoom-pill .meta-tag-link,
+.meta-panel .meta-tag-link {
+  pointer-events: auto;
+}
+
 .meta-panel-stack {
   /* hugs the right edge of the stack (stack note is ~2.6x base size) */
   left: calc(50% + clamp(160px, 24vw, 320px));
@@ -811,6 +819,47 @@ body {
   background: rgba(63, 58, 49, 0.07);
   color: var(--ink-soft);
 }
+
+/* label chips: a drawing's subjects as links into the subject filter
+   (LabelChips in Viewer.tsx). The picker's chip, in link blue. */
+.meta-tag-link {
+  appearance: none;
+  border: 0;
+  min-height: 26px;
+  padding: 4px 10px;
+  font: 700 11.5px/1.2 var(--font-ui), system-ui, sans-serif;
+  background: rgba(63, 58, 49, 0.07);
+  color: #3d6a99;
+  box-shadow: inset 0 0 0 1px rgba(61, 106, 153, 0.22);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* the series reads first: ink text and a stronger ring */
+.meta-tag-series {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(63, 58, 49, 0.4);
+}
+
+/* keyboard focus and mouse hover: ink fill, paper text (no stuck hover on touch) */
+.meta-tag-link:focus-visible {
+  outline: none;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .meta-tag-link:hover {
+    background: var(--ink);
+    color: var(--paper);
+    box-shadow: none;
+  }
+}
+
+/* the taller chips and the (shorter) child badge share a center line */
+.meta-row .meta-child { align-self: center; }
 
 @media (max-width: 760px) {
   .meta-panel-stack {
@@ -1387,4 +1436,683 @@ body:has(.intro[data-phase="open"]) .title-slip { opacity: 0; }
   font-size: 24px;
   text-align: center;
   color: var(--ink);
+}
+
+/* ===== subject filter (2026-10) ===== */
+
+/* ---- corner buttons: the subjects and numbers circles, upper right of the
+   desk. The mode-pill recipe at 34px, to match the color picker's circle in
+   the lower right. */
+
+.corner-utils {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100000; /* with the nav stack and the color picker: above every note */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.corner-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  appearance: none;
+  background: rgba(255, 253, 246, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 1px 2px rgba(80, 65, 40, 0.14),
+    0 6px 18px rgba(80, 65, 40, 0.13),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  color: var(--ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.corner-btn svg { display: block; }
+
+/* hover (pointers only, so a tap never leaves it stuck) and the open card:
+   ink glyph on a touch brighter circle */
+@media (hover: hover) {
+  .corner-btn:hover {
+    color: var(--ink);
+    background: rgba(255, 253, 246, 0.9);
+  }
+}
+.corner-btn[aria-expanded="true"] {
+  color: var(--ink);
+  background: rgba(255, 253, 246, 0.9);
+}
+
+.corner-btn:focus { outline: none; }
+.corner-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* a subject is on: an accent dot on the circle's top-right edge */
+.corner-btn[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  top: 1.5px;
+  right: 1.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--paper);
+}
+
+/* the active subject as a chip left of the circles ("Ocean · 211 ×"); all of
+   it is the clear button */
+.corner-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  max-width: min(320px, calc(50vw - 300px)); /* stops short of the mode pill */
+  padding: 3px 9px 3px 11px;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  background: rgba(63, 58, 49, 0.07);
+  color: var(--ink);
+  font: 700 11px/1.2 var(--font-ui), system-ui, sans-serif;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(63, 58, 49, 0.16);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.corner-active-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.corner-active-n {
+  flex: none;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.corner-x {
+  flex: none;
+  font: 700 13px/1 var(--font-ui), system-ui, sans-serif;
+  color: var(--ink-soft);
+  transition: color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .corner-active:hover { background: rgba(63, 58, 49, 0.12); }
+  .corner-active:hover .corner-x { color: var(--ink); }
+}
+
+.corner-active:focus { outline: none; }
+.corner-active:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* a narrower desk: left of the circles the chip would run into the mode pill,
+   so it drops to its own row under them */
+@media (min-width: 641px) and (max-width: 1100px) {
+  .corner-active {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    max-width: min(300px, calc(100vw - 32px));
+  }
+}
+
+@media (max-width: 640px) {
+  /* phones: the pair lives in the full-width paper header, centered in it.
+     The header's content is 50.5px under any status-bar inset (9 + 19 + 2 +
+     13.5 + 7, see the .title-slip phone rules), and the pair slides away with
+     it when the chrome tucks in (the header's own -110% move). */
+  .corner-utils {
+    --corner-hdr: 50.5px;
+    top: calc(env(safe-area-inset-top, 0px) + (var(--corner-hdr) - 30px) / 2);
+    right: 12px;
+    transition: transform 0.28s ease, opacity 0.22s ease;
+  }
+  html[data-chrome="off"] .corner-utils {
+    transform: translateY(calc(-1.1 * (env(safe-area-inset-top, 0px) + var(--corner-hdr))));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.22s ease, visibility 0s linear 0.28s;
+  }
+
+  .corner-btn {
+    width: 30px;
+    height: 30px;
+  }
+  .corner-btn[data-active="true"]::after {
+    top: 1px;
+    right: 1px;
+  }
+
+  /* only the dot says "filtered" up here; the picker's header names the subject */
+  .corner-active { display: none; }
+}
+
+/* ---- subject picker: a paper card under the corner buttons (a bottom sheet
+   on phones). Reuses the story sheet's unfold and the title slip's tape. */
+
+.subject-picker {
+  position: fixed;
+  top: 62px;
+  right: 16px;
+  z-index: 120000; /* over the chrome, under the story sheet (150000) and the welcome note */
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 86px);
+  padding: 16px 18px 14px;
+  background: var(--paper);
+  border-radius: 6px;
+  color: var(--ink);
+  transform: rotate(-0.4deg);
+  transform-origin: top right;
+  box-shadow:
+    0 1px 2px rgba(80, 65, 40, 0.18),
+    0 12px 32px rgba(80, 65, 40, 0.24);
+  animation: story-unfold 0.2s cubic-bezier(0.2, 1.2, 0.3, 1);
+}
+
+/* the card takes focus when it opens; it needs no ring of its own */
+.subject-picker:focus { outline: none; }
+
+.sp-grab { display: none; }
+
+.sp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+  margin-bottom: 10px;
+}
+
+.sp-title {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* Both / Chase / Vinny */
+.sp-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(63, 58, 49, 0.07);
+}
+
+.sp-seg-btn {
+  appearance: none;
+  border: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: none;
+  font: 800 11px/1.2 var(--font-ui), system-ui, sans-serif;
+  color: var(--ink-soft);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .sp-seg-btn:hover { color: var(--ink); }
+}
+
+.sp-seg-btn[data-active="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.sp-seg-btn:focus { outline: none; }
+.sp-seg-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+/* the active filter, with its way out */
+.sp-active {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: none;
+  margin: -2px 0 8px;
+  font: 600 11.5px/1.35 var(--font-ui), system-ui, sans-serif;
+  color: var(--ink-soft);
+}
+
+.sp-active-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sp-active-text b {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.sp-clear {
+  flex: none;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: none;
+  font: 700 11.5px/1.35 var(--font-ui), system-ui, sans-serif;
+  color: #3d6a99;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.sp-clear:focus { outline: none; }
+.sp-clear:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* search */
+.sp-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 7px 11px;
+  border-radius: 9px;
+  background: rgba(63, 58, 49, 0.06);
+  color: var(--ink-soft);
+  cursor: text;
+  transition: box-shadow 0.15s ease;
+}
+
+.sp-search:focus-within { box-shadow: inset 0 0 0 1.5px rgba(63, 58, 49, 0.38); }
+.sp-search > svg { flex: none; }
+
+.sp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  appearance: none;
+  background: transparent;
+  font: 600 12.5px/1.3 var(--font-ui), system-ui, sans-serif;
+  color: var(--ink);
+}
+
+.sp-input::placeholder {
+  color: var(--ink-soft);
+  opacity: 1;
+}
+
+.sp-input::-webkit-search-decoration,
+.sp-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
+.sp-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  appearance: none;
+  background: rgba(63, 58, 49, 0.12);
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sp-search-clear:focus { outline: none; }
+.sp-search-clear:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+/* the groups scroll inside the card (header, search and the numbers link stay
+   put); a fade at the bottom edge says there is more */
+.sp-groups {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 -18px;
+}
+
+.sp-groups::before,
+.sp-groups::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* chips scrolling up under the search field fade out instead of being cut */
+.sp-groups::before {
+  top: 0;
+  height: 10px;
+  background: linear-gradient(to top, rgba(251, 248, 238, 0), var(--paper));
+}
+
+.sp-groups::after {
+  bottom: 0;
+  height: 22px;
+  background: linear-gradient(to bottom, rgba(251, 248, 238, 0), var(--paper));
+}
+
+.sp-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 18px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(63, 58, 49, 0.25) transparent;
+}
+
+.sp-eyebrow {
+  margin: 12px 0 6px;
+  font: 800 9.5px/1.2 var(--font-ui), system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.sp-group:first-child .sp-eyebrow { margin-top: 10px; }
+
+.sp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  background: rgba(63, 58, 49, 0.07);
+  color: var(--ink);
+  font: 700 12px/1.2 var(--font-ui), system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+/* bigger counts, bigger chips */
+.sp-chip[data-tier="1"] { font-size: 13px; }
+.sp-chip[data-tier="3"] { font-size: 11.5px; }
+
+.sp-n {
+  font: 700 10.5px/1 var(--font-ui), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  transition: color 0.12s ease;
+}
+
+/* hover and the active subject: ink fill, paper text */
+@media (hover: hover) {
+  .sp-chip:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .sp-chip:hover .sp-n { color: rgba(251, 248, 238, 0.7); }
+}
+
+.sp-chip[data-active="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.sp-chip[data-active="true"] .sp-n { color: rgba(251, 248, 238, 0.7); }
+
+.sp-chip:focus { outline: none; }
+.sp-chip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.sp-empty {
+  margin: 18px 0 8px;
+  font: 600 12.5px/1.4 var(--font-ui), system-ui, sans-serif;
+  color: var(--ink-soft);
+}
+
+/* the door to the stats page */
+.sp-foot {
+  flex: none;
+  padding-top: 12px;
+  border-top: 1px solid rgba(63, 58, 49, 0.12);
+}
+
+.sp-numbers {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #3d6a99;
+  text-decoration: none;
+}
+
+.sp-numbers:focus { outline: none; }
+.sp-numbers:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.sp-numbers > svg { flex: none; }
+
+.sp-numbers-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sp-numbers-title {
+  display: block;
+  font: 800 12.5px/15px var(--font-ui), system-ui, sans-serif;
+}
+
+.sp-numbers-sub {
+  display: block;
+  font: 600 11px/13px var(--font-ui), system-ui, sans-serif;
+  color: var(--ink-soft);
+}
+
+.sp-numbers-arrow { transition: transform 0.15s ease; }
+
+@media (hover: hover) {
+  .sp-numbers:hover .sp-numbers-title {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .sp-numbers:hover .sp-numbers-arrow { transform: translateX(3px); }
+}
+
+/* phones: a bottom sheet over a scrim */
+.sp-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 119999;
+  background: rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+  animation: sp-fade 0.2s ease;
+}
+
+@keyframes sp-fade {
+  from { opacity: 0; }
+}
+
+@keyframes sp-slide-up {
+  from { transform: translateY(100%); }
+}
+
+@media (max-width: 640px) {
+  .subject-picker {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    min-height: min(72vh, 440px);
+    max-height: 72vh;
+    padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    border-radius: 18px 18px 0 0;
+    transform: none;
+    box-shadow: 0 -8px 30px rgba(50, 45, 35, 0.25);
+    animation: sp-slide-up 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+
+  @supports (height: 1dvh) {
+    .subject-picker {
+      min-height: min(72dvh, 440px);
+      max-height: 72dvh;
+    }
+  }
+
+  .sp-grab {
+    display: block;
+    flex: none;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 12px;
+    border-radius: 2px;
+    background: rgba(63, 58, 49, 0.25);
+  }
+
+  .sp-groups { margin: 0 -16px; }
+  .sp-scroll { padding: 0 16px 22px; }
+
+  .sp-search { padding: 9px 12px; }
+  .sp-input { font-size: 13px; }
+
+  /* the chips and toggle keep the mockup's size; a thumb gets a little more
+     room to land than they show (the gaps between chips belong to the chips) */
+  .sp-chip,
+  .sp-seg-btn { position: relative; }
+  .sp-chip::before { content: ""; position: absolute; inset: -3px; }
+  .sp-seg-btn::before { content: ""; position: absolute; inset: -6px -1px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subject-picker,
+  .sp-scrim {
+    animation: none;
+  }
+}
+
+/* ---- dark desk: what sits straight on the desk flips light; paper (the
+   card, the phone header) keeps its own colors */
+
+@media (min-width: 641px) {
+  html[data-desk-dark] .corner-btn { background: rgba(255, 253, 246, 0.84); }
+  html[data-desk-dark] .corner-btn[aria-expanded="true"] { background: rgba(255, 253, 246, 0.96); }
+  html[data-desk-dark] .corner-btn:focus-visible,
+  html[data-desk-dark] .corner-active:focus-visible { outline-color: #efe9db; }
+}
+
+@media (hover: hover) and (min-width: 641px) {
+  html[data-desk-dark] .corner-btn:hover { background: rgba(255, 253, 246, 0.96); }
+}
+
+html[data-desk-dark] .corner-active {
+  background: rgba(251, 248, 238, 0.16);
+  color: #efe9db;
+  box-shadow: inset 0 0 0 1px rgba(251, 248, 238, 0.28);
+}
+
+html[data-desk-dark] .corner-active-n,
+html[data-desk-dark] .corner-x { color: #cfc7b4; }
+
+@media (hover: hover) {
+  html[data-desk-dark] .corner-active:hover { background: rgba(251, 248, 238, 0.26); }
+  html[data-desk-dark] .corner-active:hover .corner-x { color: #efe9db; }
+}
+
+/* label chips. The caption pill is see-through paper: over a dark desk its
+   chips get their own cream fill to hold the link blue. The stack/timeline
+   caption has no pill, so its chips flip light like the rest of that text. */
+html[data-desk-dark] .zoom-pill .meta-tag-link { background: rgba(251, 248, 238, 0.9); }
+html[data-desk-dark] .zoom-pill .meta-tag-link:focus-visible { background: var(--ink); }
+
+@media (hover: hover) {
+  html[data-desk-dark] .zoom-pill .meta-tag-link:hover { background: var(--ink); }
+}
+
+html[data-desk-dark] .meta-panel .meta-tag-link {
+  background: rgba(251, 248, 238, 0.16);
+  color: #a9c8ea;
+  box-shadow: inset 0 0 0 1px rgba(169, 200, 234, 0.34);
+}
+
+html[data-desk-dark] .meta-panel .meta-tag-series {
+  color: #efe9db;
+  box-shadow: inset 0 0 0 1px rgba(239, 233, 219, 0.5);
+}
+
+html[data-desk-dark] .meta-panel .meta-tag-link:focus-visible {
+  background: #efe9db;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  html[data-desk-dark] .meta-panel .meta-tag-link:hover {
+    background: #efe9db;
+    color: var(--ink);
+    box-shadow: none;
+  }
+}
+
+/* ===== subject filter: lead's follow-ups (2026-10) ===== */
+/* the caption pill's chips stay compact so the row rarely wraps */
+.zoom-pill .meta-tag-link {
+  min-height: 24px;
+  padding: 3px 9px;
+  font-size: 11px;
+}
+/* phones: the color picker has no business over the open sheet */
+@media (max-width: 640px) {
+  body:has(.subject-picker) .bg-picker {
+    opacity: 0;
+    pointer-events: none;
+  }
 }

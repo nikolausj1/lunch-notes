@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LunchDrawing, ViewMode } from "@/lib/types";
 import { formatLong } from "@/lib/dates";
 import { ageGradeLabel } from "@/lib/kids";
+import { LabelChips } from "./Viewer";
 
 /**
  * Current-note metadata for Stack and Timeline modes.
@@ -13,9 +14,12 @@ import { ageGradeLabel } from "@/lib/kids";
 export function MetadataPanel({
   drawing,
   mode,
+  onPick,
 }: {
   drawing: LunchDrawing | null;
   mode: ViewMode;
+  /** a label chip was tapped: filter the desk to it */
+  onPick: (slug: string) => void;
 }) {
   const visible = drawing && (mode === "stack" || mode === "timeline");
   return (
@@ -41,9 +45,7 @@ export function MetadataPanel({
                   )}
                 </span>
               )}
-              {drawing.tags?.map((t) => (
-                <span key={t} className="meta-tag">{t}</span>
-              ))}
+              <LabelChips d={drawing} onPick={onPick} />
             </div>
           </motion.div>
         )}

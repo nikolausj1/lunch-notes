@@ -8,6 +8,8 @@ export type LunchDrawing = {
   title?: string;
   child?: string;
   tags?: string[];
+  /** franchise / show / game / book the drawing belongs to (pipeline/derive_series.py + curated.json) */
+  series?: string;
   description?: string;
 };
 

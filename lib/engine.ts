@@ -117,6 +117,13 @@ export class NotesEngine {
     this.root = el;
     this.layer = el?.querySelector(".notes-layer") ?? null;
     this.root?.style.setProperty("--note-size", `${this.noteSize}px`);
+    // a rebuilt engine (subject filter re-deal) adopts a layer the previous
+    // engine may have left scrolled; render() only writes the transform on
+    // change, so put the layer back at the top explicitly
+    if (this.layer) {
+      this.layer.style.transform = "";
+      this.wLayerT = "";
+    }
   }
 
   constructor(drawings: LunchDrawing[], cb: EngineCallbacks = {}) {

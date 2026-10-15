@@ -1,11 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { SITE_TITLE } from "@/lib/drawings";
 import { STORY_LINE } from "@/lib/story";
 
 // quick: the flight is only a hint of where the story lives now
 const FLIGHT_MS = 400;
+
+// once per tab session: coming back from the stats page must not replay the
+// welcome note (a fresh visit still gets it). ?nointro=1 skips it in development.
+const SEEN_KEY = "lbd-intro-seen";
+const noSubscribe = () => () => {};
+const notSeenOnServer = () => false;
+function alreadySeen(): boolean {
+  try {
+    if (
+      process.env.NODE_ENV === "development" &&
+      new URLSearchParams(window.location.search).get("nointro") === "1"
+    ) {
+      return true;
+    }
+    return sessionStorage.getItem(SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * The welcome note (replaces the old loading screen, PRD §16.2): the origin
@@ -23,6 +42,11 @@ export function IntroNote({ count, onClose }: { count: number; onClose: () => vo
   const close = useCallback(() => {
     if (leaving.current) return;
     leaving.current = true;
+    try {
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      // private mode or blocked storage: the note simply shows again next time
+    }
     setPhase("leaving");
     onClose();
 
@@ -86,8 +110,17 @@ export function IntroNote({ count, onClose }: { count: number; onClose: () => vo
       .then(() => setPhase("gone"));
   }, [onClose]);
 
+  // this tab has already read the note (e.g. back from the stats page): skip it
+  // and let the post-its fly in right away
+  const seen = useSyncExternalStore(noSubscribe, alreadySeen, notSeenOnServer);
   useEffect(() => {
-    if (phase !== "open") return;
+    if (!seen || leaving.current) return;
+    leaving.current = true;
+    onClose();
+  }, [seen, onClose]);
+
+  useEffect(() => {
+    if (phase !== "open" || seen) return;
     // focus the note itself, not its button: screen readers start at the
     // story, and phones don't draw a focus ring around the button on load
     noteRef.current?.focus({ preventScroll: true });
@@ -105,9 +138,9 @@ export function IntroNote({ count, onClose }: { count: number; onClose: () => vo
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [phase, close]);
+  }, [phase, close, seen]);
 
-  if (phase === "gone") return null;
+  if (phase === "gone" || seen) return null;
 
   return (
     <div className="intro" data-phase={phase} onClick={close}>

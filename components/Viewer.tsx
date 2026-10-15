@@ -15,6 +15,16 @@ import { IntroNote } from "./IntroNote";
 import { BackgroundPicker } from "./BackgroundPicker";
 import { TimeStrip, TimeStripHandle } from "./TimeStrip";
 import { WallRail, WallRailHandle } from "./WallRail";
+import { CornerButtons } from "./CornerButtons";
+import { SubjectPicker } from "./SubjectPicker";
+import {
+  applyFilter,
+  EMPTY_FILTER,
+  Filter,
+  HIDDEN_TAGS,
+  labelForSlug,
+  slugify,
+} from "@/lib/taxonomy";
 
 // when "Open the Lunchbox" comes before the preload finishes, wait at most this
 // long before the post-its fly in anyway (they fill in as images arrive)
@@ -25,10 +35,13 @@ function CaptionPill({
   d,
   num,
   top,
+  onPick,
 }: {
   d: LunchDrawing;
   num: number | undefined;
   top: string;
+  /** a subject chip was tapped: filter the desk to that label */
+  onPick: (slug: string) => void;
 }) {
   return (
     <div className="zoom-pill" key={d.id} style={{ top }}>
@@ -47,11 +60,41 @@ function CaptionPill({
           <span className="zp-sep">·</span>
           <span className="zp-num">drawing #{num?.toLocaleString()}</span>
         </span>
-        {d.tags?.map((t) => (
-          <span key={t} className="meta-tag">{t}</span>
-        ))}
+        <LabelChips d={d} onPick={onPick} />
       </div>
     </div>
+  );
+}
+
+/**
+ * The drawing's labels as links into the subject filter: the series first
+ * (Kirby, Octonauts…), then its subject and occasion tags. Umbrella tags and
+ * the franchise tags the series field now covers stay out of the way.
+ */
+export function LabelChips({ d, onPick }: { d: LunchDrawing; onPick: (slug: string) => void }) {
+  const tags = (d.tags ?? []).filter((t) => !HIDDEN_TAGS.includes(t) && t !== d.series);
+  return (
+    <>
+      {d.series && (
+        <button
+          type="button"
+          className="meta-tag meta-tag-link meta-tag-series"
+          onClick={() => onPick(slugify(d.series as string))}
+        >
+          {d.series}
+        </button>
+      )}
+      {tags.map((t) => (
+        <button
+          type="button"
+          key={t}
+          className="meta-tag meta-tag-link"
+          onClick={() => onPick(slugify(t))}
+        >
+          {t}
+        </button>
+      ))}
+    </>
   );
 }
 
@@ -65,6 +108,30 @@ function subscribePhone(onChange: () => void) {
 const isPhoneNow = () => window.matchMedia(PHONE_MQ).matches;
 const isPhoneOnServer = () => false;
 
+// the query string is read once per search value (useSyncExternalStore needs a
+// stable snapshot); the server snapshot is "nothing chosen"
+const noSubscribe = () => () => {};
+let urlFilterCache: { search: string; value: Filter } | null = null;
+function readUrlFilter(): Filter {
+  const search = window.location.search;
+  if (urlFilterCache?.search === search) return urlFilterCache.value;
+  const p = new URLSearchParams(search);
+  const tag = p.get("tag");
+  const child = (p.get("child") ?? "").toLowerCase();
+  const value: Filter = {
+    tag: tag ? slugify(tag) : null,
+    child: child === "chase" ? "Chase" : child === "vinny" ? "Vinny" : null,
+  };
+  urlFilterCache = { search, value };
+  return value;
+}
+const emptyFilterOnServer = () => EMPTY_FILTER;
+/** dev hook for screenshots: ?picker=1 opens the subject card on load */
+const readPickerParam = () =>
+  process.env.NODE_ENV === "development" &&
+  new URLSearchParams(window.location.search).get("picker") === "1";
+const pickerClosedOnServer = () => false;
+
 /** ?count=N keeps a recent slice (testing); default is the whole archive */
 function getCount(): number | undefined {
   if (typeof window === "undefined") return undefined;
@@ -75,7 +142,22 @@ function getCount(): number | undefined {
 export function Viewer() {
   const [count] = useState(getCount);
   const all = useMemo(() => getDrawings(count), [count]);
-  const drawings = all;
+  // the subject filter (a tag or series slug, and/or a child): the desk shows
+  // the matching subset; everything that counts drawings globally uses `all`.
+  // It starts from the query string (read after hydration, like the phone
+  // default) and a choice made on the page overrides it from then on.
+  const urlFilter = useSyncExternalStore(noSubscribe, readUrlFilter, emptyFilterOnServer);
+  const [chosenFilter, setChosenFilter] = useState<Filter | null>(null);
+  const filter = chosenFilter ?? urlFilter;
+  const drawings = useMemo(() => applyFilter(all, filter), [all, filter]);
+  const filterLabel = useMemo(
+    () => (filter.tag ? labelForSlug(all, filter.tag) : null),
+    [all, filter.tag]
+  );
+  const pickerFromUrl = useSyncExternalStore(noSubscribe, readPickerParam, pickerClosedOnServer);
+  const [pickerChoice, setPickerChoice] = useState<boolean | null>(null);
+  const pickerOpen = pickerChoice ?? pickerFromUrl;
+  const setPickerOpen = setPickerChoice;
   // running number in the whole archive (oldest = #1), stable under filters
   const numById = useMemo(() => {
     const m = new Map<string, number>();
@@ -213,7 +295,14 @@ export function Viewer() {
     // NoteCard ref callbacks fired before the engine existed — attach now
     surfaceRef.current
       ?.querySelectorAll<HTMLDivElement>("[data-note-i]")
-      .forEach((el) => eng.attach(Number(el.dataset.noteI), el));
+      .forEach((el) => {
+        // a filter change rebuilds the engine around the same DOM nodes: hide
+        // every note again so a survivor of the old layout can't sit on screen
+        // at its old spot until the new render reaches it (the engine writes
+        // display only when its own bookkeeping changes)
+        el.style.display = "none";
+        eng.attach(Number(el.dataset.noteI), el);
+      });
 
     // ResizeObserver instead of window resize: the page can be laid out at
     // zero size briefly (embedded previews, background tabs) with no resize
@@ -285,6 +374,8 @@ export function Viewer() {
     document.addEventListener("visibilitychange", onVis);
 
     const onKey = (e: KeyboardEvent) => {
+      // the subject picker's search field owns its own keys
+      if ((e.target as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) return;
       if (e.key === "Escape") {
         // put an opened note back (grid zoom / wall moment)
         eng.onGridClick(null);
@@ -315,12 +406,8 @@ export function Viewer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawings]);
 
-  const changeMode = (m: ViewMode) => {
-    setMode(m);
-    setHeld(null);
-    setWallOpenState(null);
-    engineRef.current?.setMode(m);
-    // leaving grid resets its scroll — the mobile chrome comes home with it
+  // the grid scroll resets (mode change, re-deal): the mobile chrome comes home with it
+  const resetChrome = () => {
     const cr = chromeRef.current;
     cr.off = false;
     cr.prev = 0;
@@ -330,6 +417,54 @@ export function Viewer() {
     root.dataset.headerOff = "0";
     syncThemeColor();
   };
+
+  const changeMode = (m: ViewMode) => {
+    setMode(m);
+    setHeld(null);
+    setWallOpenState(null);
+    engineRef.current?.setMode(m);
+    resetChrome();
+  };
+
+  // a new filter re-deals the desk (the engine effect rebuilds on `drawings`):
+  // drop every index-based interaction state first, since the indices move
+  const setFilter = useCallback((next: Filter) => {
+    setChosenFilter((cur) =>
+      cur && cur.tag === next.tag && cur.child === next.child
+        ? cur
+        : { tag: next.tag, child: next.child }
+    );
+    setGridZoomState(null);
+    setWallOpenState(null);
+    setHeld(null);
+    setFocus(null);
+    resetChrome();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // the filter lives in the query string (?tag=ocean&child=vinny) so a filtered
+  // desk can be shared: write a choice back once one has been made
+  useEffect(() => {
+    if (!chosenFilter) return;
+    const p = new URLSearchParams(window.location.search);
+    if (filter.tag) p.set("tag", filter.tag);
+    else p.delete("tag");
+    if (filter.child) p.set("child", filter.child.toLowerCase());
+    else p.delete("child");
+    const q = p.toString();
+    const next = window.location.pathname + (q ? `?${q}` : "") + window.location.hash;
+    const cur = window.location.pathname + window.location.search + window.location.hash;
+    if (next !== cur) history.replaceState(null, "", next);
+  }, [chosenFilter, filter]);
+
+  // a label chip (caption pill, stack/timeline caption) narrows to that label
+  const pickLabel = useCallback(
+    (slug: string) => {
+      setFilter({ tag: slug, child: filter.child });
+      setPickerOpen(false);
+    },
+    [filter.child, setFilter]
+  );
 
   const changeGridCols = (cols: number) => {
     setGridColsChoice(cols);
@@ -384,14 +519,30 @@ export function Viewer() {
     }
   }, [gridZoom, drawings, numById]);
 
-  // arriving with #1514 in the URL opens that drawing once the grid is up
+  // arriving with #1514 in the URL opens that drawing once the grid is up.
+  // The number is the archive number; if the current filter hides that
+  // drawing, the filter yields (the re-deal re-runs this effect).
   const openedFromHash = useRef(false);
   useEffect(() => {
     if (!loaded || openedFromHash.current) return;
-    openedFromHash.current = true;
     const m = /^#(\d{1,4})$/.exec(window.location.hash);
-    if (!m) return;
-    const idx = Number(m[1]) - 1;
+    if (!m) {
+      openedFromHash.current = true;
+      return;
+    }
+    const target = all[Number(m[1]) - 1];
+    if (!target) {
+      openedFromHash.current = true;
+      return;
+    }
+    const idx = drawings.indexOf(target);
+    if (idx < 0) {
+      // the shared drawing is outside the current filter: the filter yields and
+      // the re-deal brings this effect back around with the full set
+      const t = setTimeout(() => setFilter(EMPTY_FILTER), 0);
+      return () => clearTimeout(t);
+    }
+    openedFromHash.current = true;
     let tries = 0;
     const attempt = () => {
       const eng = engineRef.current;
@@ -412,7 +563,7 @@ export function Viewer() {
     const t = setTimeout(attempt, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [loaded, drawings]);
 
   // full-res images near the focused note in stack/timeline
   const featured = useMemo(() => {
@@ -456,7 +607,7 @@ export function Viewer() {
           const eng = engineRef.current;
           if (!eng) return;
           // presses on UI controls must not start desk interactions or capture the pointer
-          if ((e.target as HTMLElement).closest("button, .nav-stack, .time-strip, .wall-rail, .title-slip, .story-backdrop, .bg-picker")) return;
+          if ((e.target as HTMLElement).closest("button, a, .nav-stack, .time-strip, .wall-rail, .title-slip, .story-backdrop, .bg-picker, .corner-utils, .zoom-pill")) return;
           const noteEl = (e.target as HTMLElement).closest("[data-note-i]");
           const idx = noteEl ? Number(noteEl.getAttribute("data-note-i")) : null;
           eng.onPointerDown(e.clientX, e.clientY, idx);
@@ -551,7 +702,12 @@ export function Viewer() {
         }}
         onPointerLeave={() => engineRef.current?.pointerLeft()}
       >
-        <DeskSurface count={all.length} />
+        <DeskSurface
+          count={all.length}
+          shown={drawings.length}
+          label={filterLabel}
+          child={filter.child}
+        />
 
         <div className="thread-months" data-visible={mode === "timeline"} aria-hidden>
           {monthMarks.map((m, k) => (
@@ -633,7 +789,8 @@ export function Viewer() {
           <CaptionPill
             d={drawings[gridZoom.idx]}
             num={numById.get(drawings[gridZoom.idx].id)}
-            top={`calc(50% + ${Math.round(gridZoom.size / 2) + 18}px)`}
+            top={`min(calc(50% + ${Math.round(gridZoom.size / 2) + 18}px), calc(100% - 150px))`}
+            onPick={pickLabel}
           />
         )}
 
@@ -641,15 +798,26 @@ export function Viewer() {
           <CaptionPill
             d={drawings[wallOpen.idx]}
             num={numById.get(drawings[wallOpen.idx].id)}
-            top={`calc(45% + ${Math.round(wallOpen.size / 2) + 18}px)`}
+            top={`min(calc(45% + ${Math.round(wallOpen.size / 2) + 18}px), calc(100% - 150px))`}
+            onPick={pickLabel}
           />
         )}
 
         <BackgroundPicker />
 
+        <CornerButtons
+          filterLabel={filterLabel}
+          filterChild={filter.child}
+          shown={drawings.length}
+          pickerOpen={pickerOpen}
+          onTogglePicker={() => setPickerOpen((o) => !o)}
+          onClear={() => setFilter(EMPTY_FILTER)}
+        />
+
         <MetadataPanel
           drawing={focus != null ? drawings[focus] ?? null : null}
           mode={mode}
+          onPick={pickLabel}
         />
         {/* grid zoom and wall use the caption pill (wall: only when pinned);
             the riding card stays for scatter's hold-to-inspect */}
@@ -678,6 +846,13 @@ export function Viewer() {
 
       {/* outside the viewer, so presses and wheels on its scrim never reach the desk */}
       <IntroNote count={all.length} onClose={onIntroClose} />
+      <SubjectPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        all={all}
+        filter={filter}
+        onChange={setFilter}
+      />
     </>
   );
 }

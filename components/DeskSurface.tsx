@@ -9,7 +9,20 @@ import { STORY_TEXT } from "@/lib/story";
  * door to the origin story: click it and a larger sheet of the same paper
  * unfolds with the full paragraph.
  */
-export function DeskSurface({ count }: { count: number }) {
+export function DeskSurface({
+  count,
+  shown = count,
+  label = null,
+  child = null,
+}: {
+  /** the whole archive */
+  count: number;
+  /** drawings on the desk right now (the filtered set) */
+  shown?: number;
+  /** the active subject's display name, if any */
+  label?: string | null;
+  child?: "Chase" | "Vinny" | null;
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -37,7 +50,11 @@ export function DeskSurface({ count }: { count: number }) {
         <span className="title-slip-tape" aria-hidden />
         <h1>{SITE_TITLE}</h1>
         <p>
-          {`${count.toLocaleString()} drawings for my sons’ lunches`}
+          {label || child
+            ? `${shown.toLocaleString()} ${label ? `${label} ` : ""}drawings for ${
+                child ? `${child}’s` : "my sons’"
+              } lunches`
+            : `${count.toLocaleString()} drawings for my sons’ lunches`}
           {" · "}
           <span className="slip-hint">the story</span>
         </p>
