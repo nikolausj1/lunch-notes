@@ -426,3 +426,109 @@ export function computeStats(drawings: LunchDrawing[]): NumbersStats {
     calendar: { years, weekendDrawings, legendSeries, legendSubjects },
   };
 }
+
+/* ----------------------------------------------------------- lifespans */
+
+/** one series, counted per calendar month across the archive */
+export type LifespanRow = {
+  name: string;
+  /** the filter slug: the name links to /?tag=<slug> */
+  slug: string;
+  color: string;
+  total: number;
+  /** the date of the series' first drawing */
+  first: string;
+  /** months with at least one drawing, oldest first: [months since the archive's first month, drawings] */
+  months: [offset: number, count: number][];
+  /** the most drawings in any one month */
+  peak: number;
+};
+
+/** a school year (Aug to Jul), as far as the archive covers it */
+export type LifespanYear = {
+  /** "2019-20" */
+  label: string;
+  /** months since the archive's first month where it starts */
+  start: number;
+  /** how many of its months the archive covers */
+  count: number;
+};
+
+export type LifespanData = {
+  /** the archive's first month: year and 0-indexed month */
+  start: { y: number; m: number };
+  /** months from the archive's first to its last, inclusive */
+  monthCount: number;
+  years: LifespanYear[];
+  /** the `limit` series with the most drawings, ordered by their first drawing */
+  rows: LifespanRow[];
+};
+
+/**
+ * "Lifespans": the biggest series (by the `series` field) as one row each, with
+ * its drawings counted per calendar month over the archive's whole span, first
+ * month to last. Rows run oldest first (by each series' first drawing), so the
+ * chart reads as a timeline of arrivals, peaks and fade-outs.
+ */
+export function computeLifespans(drawings: LunchDrawing[], limit = 24): LifespanData {
+  let first = "";
+  let last = "";
+  for (const d of drawings) {
+    if (!first || d.date < first) first = d.date;
+    if (d.date > last) last = d.date;
+  }
+  if (!first) return { start: { y: 0, m: 0 }, monthCount: 0, years: [], rows: [] };
+
+  const a = parseISO(first);
+  const b = parseISO(last);
+  const monthCount = (b.y - a.y) * 12 + (b.m - a.m) + 1;
+  const offsetOf = (iso: string) => {
+    const { y, m } = parseISO(iso);
+    return (y - a.y) * 12 + (m - a.m);
+  };
+
+  const bySeries = new Map<string, { total: number; first: string; months: Map<number, number> }>();
+  for (const d of drawings) {
+    if (!d.series) continue;
+    let s = bySeries.get(d.series);
+    if (!s) {
+      s = { total: 0, first: d.date, months: new Map() };
+      bySeries.set(d.series, s);
+    }
+    s.total++;
+    if (d.date < s.first) s.first = d.date;
+    const o = offsetOf(d.date);
+    s.months.set(o, (s.months.get(o) ?? 0) + 1);
+  }
+
+  const rows: LifespanRow[] = [...bySeries.entries()]
+    .sort((p, q) => q[1].total - p[1].total || p[0].localeCompare(q[0]))
+    .slice(0, limit)
+    .map(([name, s]) => {
+      const months = [...s.months.entries()].sort((p, q) => p[0] - q[0]);
+      return {
+        name,
+        slug: slugify(name),
+        color: SERIES_BY_NAME.get(name)?.color ?? "#b9b2a4",
+        total: s.total,
+        first: s.first,
+        months,
+        peak: Math.max(...months.map(([, n]) => n)),
+      };
+    })
+    .sort((p, q) => (p.first < q.first ? -1 : p.first > q.first ? 1 : q.total - p.total || p.name.localeCompare(q.name)));
+
+  // school years (Aug to Jul), clamped to the months the archive covers
+  const years: LifespanYear[] = [];
+  for (let i = 0; i < monthCount; i++) {
+    const cal = a.m + i; // months since January of the first year
+    const y = a.y + Math.floor(cal / 12);
+    const sy = cal % 12 >= 7 ? y : y - 1;
+    const label = `${sy}-${String((sy + 1) % 100).padStart(2, "0")}`;
+    const cur = years[years.length - 1];
+    if (cur && cur.label === label) cur.count++;
+    else years.push({ label, start: i, count: 1 });
+  }
+
+  return { start: { y: a.y, m: a.m }, monthCount, years, rows };
+}

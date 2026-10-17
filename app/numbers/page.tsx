@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./numbers.css";
 import { getDrawings } from "@/lib/drawings";
-import { NO_THEME_COLOR, computeStats, monthYear, num } from "@/lib/stats";
+import { NO_THEME_COLOR, computeLifespans, computeStats, monthYear, num } from "@/lib/stats";
 import { Calendar } from "@/components/numbers/Calendar";
 import { Cast } from "@/components/numbers/Cast";
 import { GroupBars } from "@/components/numbers/GroupBars";
 import { Legend, type LegendItem } from "@/components/numbers/Legend";
+import { Lifespans } from "@/components/numbers/Lifespans";
 import { Treemap } from "@/components/numbers/Treemap";
 
 /**
@@ -82,6 +83,16 @@ export default function NumbersPage() {
     { label: "no drawing", swatch: "outline" },
   ];
 
+  // Lifespans colors every row by its series, so the legend names the biggest few (as the calendar's does)
+  // and folds the rest into one item
+  const lifespans = computeLifespans(getDrawings());
+  const lifespanNamed = [...lifespans.rows].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name)).slice(0, 10);
+  const lifespanOther = lifespans.rows.length - lifespanNamed.length;
+  const lifespansLegend: LegendItem[] = [
+    ...lifespanNamed.map((r) => ({ label: r.name, slug: r.slug, color: r.color })),
+    ...(lifespanOther > 0 ? [{ label: `${lifespanOther} other series`, swatch: "multi" as const }] : []),
+  ];
+
   return (
     <>
       <main className="numbers" suppressHydrationWarning>
@@ -101,6 +112,18 @@ export default function NumbersPage() {
                 </span>
               ))}
             </p>
+
+            <section className="nb-sec">
+              <div className="nb-sec-h">
+                <h2>Lifespans</h2>
+                <span>
+                  the {lifespans.rows.length} biggest series, oldest first; a cell is a month, darker means more drawings
+                </span>
+              </div>
+              <p className="nb-cal-hint">Swipe sideways to follow the months.</p>
+              <Lifespans data={lifespans} />
+              <Legend items={lifespansLegend} />
+            </section>
 
             <div className="numbers-tiles">
               <div className="nb-tile">

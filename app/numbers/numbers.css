@@ -587,3 +587,128 @@ html[data-desk-dark] .numbers .numbers-end,
     display: block;
   }
 }
+
+/* --------------------------------------------------------------- lifespans */
+
+/* one row per series, one cell per month: the SVG scales with the sheet, and a phone scrolls it sideways */
+.numbers .nb-ls-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* the SVG and, on phones, the pinned name column share one grid cell */
+.numbers .nb-ls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.numbers .nb-ls > * {
+  grid-area: 1 / 1;
+  align-self: start;
+}
+
+.numbers .nb-ls-nm {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.numbers .nb-ls-link {
+  fill: var(--link);
+  text-decoration-color: rgba(61, 106, 153, 0.4);
+}
+
+.numbers .nb-ls-total {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--ink-soft);
+}
+
+/* first and last month of a series, and the school-year labels along the top */
+.numbers .nb-ls-m {
+  font-size: 9.5px;
+  font-weight: 600;
+  fill: var(--ink-soft);
+}
+
+.numbers .nb-ls-y {
+  font-size: 9.5px;
+  font-weight: 700;
+  fill: var(--ink-soft);
+}
+
+/* the pinned name column is for phones only */
+.numbers .nb-ls-names {
+  display: none;
+}
+
+/* the fact tiles now follow a section rather than the subtitle: same gap as between sections */
+.numbers .nb-sec + .numbers-tiles {
+  margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+  /* keep the chart's own size and scroll it sideways; the names stay put at the left, like the calendar's year labels */
+  .numbers .nb-ls {
+    min-width: var(--ls-w);
+  }
+
+  .numbers .nb-ls-nm {
+    display: none;
+  }
+
+  .numbers .nb-ls-names {
+    display: block;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    justify-self: start;
+    width: var(--ls-name);
+    margin: 0;
+    padding: var(--ls-head) 0 0;
+    list-style: none;
+    background: var(--paper);
+  }
+
+  .numbers .nb-ls-names li {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    box-sizing: border-box;
+    height: var(--ls-row);
+    border-bottom: 1px solid rgba(63, 58, 49, 0.07);
+    font: 600 11px/21px var(--font-ui), system-ui, sans-serif;
+    color: var(--ink-soft);
+  }
+
+  /* a name too long for the column ends in an ellipsis; its total stays */
+  .numbers .nb-ls-names a {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-color: rgba(61, 106, 153, 0.4);
+    text-underline-offset: 2px;
+  }
+
+  .numbers .nb-ls-names span {
+    flex: none;
+  }
+
+  /* a first-month label that would sit under this column rides in it instead, right where it would have been */
+  .numbers .nb-ls-pin {
+    display: none;
+  }
+
+  .numbers .nb-ls-names em {
+    position: absolute;
+    right: 4px;
+    font: normal 600 9.5px/21px var(--font-ui), system-ui, sans-serif;
+    color: var(--ink-soft);
+  }
+}
