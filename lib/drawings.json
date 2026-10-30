@@ -23801,7 +23801,8 @@
 "tags": [
 "Halloween",
 "Movies"
-]
+],
+"series": "Scream"
 },
 {
 "id": "d25c3b42c91",
@@ -23813,7 +23814,8 @@
 "title": "Ghostface Pumpkin",
 "tags": [
 "Halloween"
-]
+],
+"series": "Scream"
 },
 {
 "id": "d9053923968",
@@ -27896,6 +27898,451 @@
 "tags": [
 "Animals",
 "Characters"
+]
+},
+{
+"id": "d70de90d0cc",
+"imageSrc": "/notes/d70de90d0cc.webp",
+"thumbSrc": "/thumbs/d70de90d0cc.webp",
+"date": "2026-10-07",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Axolotl Wizard",
+"tags": [
+"Animals",
+"Characters"
+]
+},
+{
+"id": "d7c4e515654",
+"imageSrc": "/notes/d7c4e515654.webp",
+"thumbSrc": "/thumbs/d7c4e515654.webp",
+"date": "2026-10-07",
+"dateSource": "written",
+"child": "Chase",
+"title": "Spellcasting Axolotl Wizard",
+"tags": [
+"Animals",
+"Characters"
+]
+},
+{
+"id": "d0cb2c66c15",
+"imageSrc": "/notes/d0cb2c66c15.webp",
+"thumbSrc": "/thumbs/d0cb2c66c15.webp",
+"date": "2026-10-08",
+"dateSource": "written",
+"child": "Chase",
+"title": "Charging Pigeon Knight",
+"tags": [
+"Birds",
+"Characters"
+]
+},
+{
+"id": "dcc45f7c567",
+"imageSrc": "/notes/dcc45f7c567.webp",
+"thumbSrc": "/thumbs/dcc45f7c567.webp",
+"date": "2026-10-08",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Pigeon Knight with Shield",
+"tags": [
+"Birds",
+"Characters"
+]
+},
+{
+"id": "d23d778363d",
+"imageSrc": "/notes/d23d778363d.webp",
+"thumbSrc": "/thumbs/d23d778363d.webp",
+"date": "2026-10-12",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Aviator Duck",
+"tags": [
+"Birds",
+"Characters"
+]
+},
+{
+"id": "dfcadbc00cb",
+"imageSrc": "/notes/dfcadbc00cb.webp",
+"thumbSrc": "/thumbs/dfcadbc00cb.webp",
+"date": "2026-10-12",
+"dateSource": "written",
+"child": "Chase",
+"title": "Scarfed Aviator Duck",
+"tags": [
+"Birds",
+"Characters"
+]
+},
+{
+"id": "dcdf8ce4d7c",
+"imageSrc": "/notes/dcdf8ce4d7c.webp",
+"thumbSrc": "/thumbs/dcdf8ce4d7c.webp",
+"date": "2026-10-13",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Mighty Poseidon",
+"tags": [
+"Ocean",
+"Characters"
+],
+"series": "Percy Jackson"
+},
+{
+"id": "de74dab104f",
+"imageSrc": "/notes/de74dab104f.webp",
+"thumbSrc": "/thumbs/de74dab104f.webp",
+"date": "2026-10-13",
+"dateSource": "written",
+"child": "Chase",
+"title": "Rider on Rearing Steed",
+"tags": [
+"Animals",
+"Characters"
+]
+},
+{
+"id": "d2757ecd16e",
+"imageSrc": "/notes/d2757ecd16e.webp",
+"thumbSrc": "/thumbs/d2757ecd16e.webp",
+"date": "2026-10-14",
+"dateSource": "written",
+"child": "Chase",
+"title": "Frog with Briefcase",
+"tags": [
+"Animals",
+"Characters"
+]
+},
+{
+"id": "dc9c3de5243",
+"imageSrc": "/notes/dc9c3de5243.webp",
+"thumbSrc": "/thumbs/dc9c3de5243.webp",
+"date": "2026-10-14",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Commuter Frog in Tie",
+"tags": [
+"Animals",
+"Characters"
+]
+},
+{
+"id": "d18a00d5884",
+"imageSrc": "/notes/d18a00d5884.webp",
+"thumbSrc": "/thumbs/d18a00d5884.webp",
+"date": "2026-10-15",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Skateboarding Turtle",
+"tags": [
+"Animals",
+"Sports"
+]
+},
+{
+"id": "d65ace33f53",
+"imageSrc": "/notes/d65ace33f53.webp",
+"thumbSrc": "/thumbs/d65ace33f53.webp",
+"date": "2026-10-15",
+"dateSource": "written",
+"child": "Chase",
+"title": "Cool Skater Turtle",
+"tags": [
+"Animals",
+"Sports"
+]
+},
+{
+"id": "d547cfbbb6e",
+"imageSrc": "/notes/d547cfbbb6e.webp",
+"thumbSrc": "/thumbs/d547cfbbb6e.webp",
+"date": "2026-10-16",
+"dateSource": "written",
+"child": "Chase",
+"title": "Porcupine Taking Aim",
+"tags": [
+"Animals",
+"Characters"
+]
+},
+{
+"id": "d85f8064c95",
+"imageSrc": "/notes/d85f8064c95.webp",
+"thumbSrc": "/thumbs/d85f8064c95.webp",
+"date": "2026-10-16",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Porcupine Archer",
+"tags": [
+"Animals",
+"Characters"
+]
+},
+{
+"id": "dc86ec3606a",
+"imageSrc": "/notes/dc86ec3606a.webp",
+"thumbSrc": "/thumbs/dc86ec3606a.webp",
+"date": "2026-10-19",
+"dateSource": "written",
+"child": "Chase",
+"title": "Big-Eyed Jumping Spider",
+"tags": [
+"Creatures"
+]
+},
+{
+"id": "de87729f2a2",
+"imageSrc": "/notes/de87729f2a2.webp",
+"thumbSrc": "/thumbs/de87729f2a2.webp",
+"date": "2026-10-19",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Friendly Jumping Spider",
+"tags": [
+"Creatures"
+]
+},
+{
+"id": "d7fee799221",
+"imageSrc": "/notes/d7fee799221.webp",
+"thumbSrc": "/thumbs/d7fee799221.webp",
+"date": "2026-10-20",
+"dateSource": "written",
+"child": "Chase",
+"title": "Ghostface With Knife",
+"tags": [
+"Halloween",
+"Movies",
+"Characters"
+],
+"series": "Scream"
+},
+{
+"id": "df3505ae24e",
+"imageSrc": "/notes/df3505ae24e.webp",
+"thumbSrc": "/thumbs/df3505ae24e.webp",
+"date": "2026-10-20",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Ghostface with Knife",
+"tags": [
+"Halloween",
+"Movies",
+"Characters"
+],
+"series": "Scream"
+},
+{
+"id": "dbcd23b5deb",
+"imageSrc": "/notes/dbcd23b5deb.webp",
+"thumbSrc": "/thumbs/dbcd23b5deb.webp",
+"date": "2026-10-21",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Capy-Boo-Ra Ghost",
+"tags": [
+"Capybara",
+"Halloween"
+]
+},
+{
+"id": "dd3879c11d7",
+"imageSrc": "/notes/dd3879c11d7.webp",
+"thumbSrc": "/thumbs/dd3879c11d7.webp",
+"date": "2026-10-21",
+"dateSource": "written",
+"child": "Chase",
+"title": "Capy-Boo-Ra Ghost",
+"tags": [
+"Capybara",
+"Halloween"
+]
+},
+{
+"id": "d4c26aefbf9",
+"imageSrc": "/notes/d4c26aefbf9.webp",
+"thumbSrc": "/thumbs/d4c26aefbf9.webp",
+"date": "2026-10-22",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Pumpkin-Head Goose",
+"tags": [
+"Halloween",
+"Birds"
+]
+},
+{
+"id": "d855e067126",
+"imageSrc": "/notes/d855e067126.webp",
+"thumbSrc": "/thumbs/d855e067126.webp",
+"date": "2026-10-22",
+"dateSource": "written",
+"child": "Chase",
+"title": "Pumpkin-Head Goose",
+"tags": [
+"Halloween",
+"Birds"
+]
+},
+{
+"id": "d2a41c05d68",
+"imageSrc": "/notes/d2a41c05d68.webp",
+"thumbSrc": "/thumbs/d2a41c05d68.webp",
+"date": "2026-10-23",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Capybara in Pumpkin",
+"tags": [
+"Capybara",
+"Halloween"
+]
+},
+{
+"id": "dd5a07ab401",
+"imageSrc": "/notes/dd5a07ab401.webp",
+"thumbSrc": "/thumbs/dd5a07ab401.webp",
+"date": "2026-10-23",
+"dateSource": "written",
+"child": "Chase",
+"title": "Capybara in Pumpkin",
+"tags": [
+"Capybara",
+"Halloween"
+]
+},
+{
+"id": "db5ba791a73",
+"imageSrc": "/notes/db5ba791a73.webp",
+"thumbSrc": "/thumbs/db5ba791a73.webp",
+"date": "2026-10-26",
+"dateSource": "written",
+"child": "Chase",
+"title": "Surprised Pumpkin With Lid",
+"tags": [
+"Halloween"
+]
+},
+{
+"id": "dc6fb650583",
+"imageSrc": "/notes/dc6fb650583.webp",
+"thumbSrc": "/thumbs/dc6fb650583.webp",
+"date": "2026-10-26",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Pumpkin Spewing Guts",
+"tags": [
+"Halloween"
+]
+},
+{
+"id": "d4d0e62b7c3",
+"imageSrc": "/notes/d4d0e62b7c3.webp",
+"thumbSrc": "/thumbs/d4d0e62b7c3.webp",
+"date": "2026-10-27",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Caramel Apple on Stick",
+"tags": [
+"Dessert",
+"Halloween"
+]
+},
+{
+"id": "d53db82b252",
+"imageSrc": "/notes/d53db82b252.webp",
+"thumbSrc": "/thumbs/d53db82b252.webp",
+"date": "2026-10-27",
+"dateSource": "written",
+"child": "Chase",
+"title": "Caramel Apple",
+"tags": [
+"Dessert",
+"Halloween"
+]
+},
+{
+"id": "d81ebb73c93",
+"imageSrc": "/notes/d81ebb73c93.webp",
+"thumbSrc": "/thumbs/d81ebb73c93.webp",
+"date": "2026-10-28",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Brewers Batting Helmet",
+"tags": [
+"Sports"
+]
+},
+{
+"id": "db2ecbb1ed0",
+"imageSrc": "/notes/db2ecbb1ed0.webp",
+"thumbSrc": "/thumbs/db2ecbb1ed0.webp",
+"date": "2026-10-28",
+"dateSource": "written",
+"child": "Chase",
+"title": "Brewers Baseball Cap",
+"tags": [
+"Sports"
+]
+},
+{
+"id": "d1d4760b3d8",
+"imageSrc": "/notes/d1d4760b3d8.webp",
+"thumbSrc": "/thumbs/d1d4760b3d8.webp",
+"date": "2026-10-29",
+"dateSource": "written",
+"child": "Chase",
+"title": "Slimer From Ghostbusters",
+"tags": [
+"Movies",
+"Halloween",
+"Characters"
+],
+"series": "Ghostbusters"
+},
+{
+"id": "d7daf307b4c",
+"imageSrc": "/notes/d7daf307b4c.webp",
+"thumbSrc": "/thumbs/d7daf307b4c.webp",
+"date": "2026-10-29",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Slimer From Ghostbusters",
+"tags": [
+"Movies",
+"Halloween",
+"Characters"
+],
+"series": "Ghostbusters"
+},
+{
+"id": "d3f000a18b0",
+"imageSrc": "/notes/d3f000a18b0.webp",
+"thumbSrc": "/thumbs/d3f000a18b0.webp",
+"date": "2026-10-30",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Pumpkin Candy Bucket",
+"tags": [
+"Halloween",
+"Dessert"
+]
+},
+{
+"id": "da0594b9884",
+"imageSrc": "/notes/da0594b9884.webp",
+"thumbSrc": "/thumbs/da0594b9884.webp",
+"date": "2026-10-30",
+"dateSource": "written",
+"child": "Chase",
+"title": "Pumpkin Candy Bucket",
+"tags": [
+"Halloween",
+"Dessert"
 ]
 }
 ]
