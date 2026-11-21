@@ -28344,5 +28344,357 @@
 "Halloween",
 "Dessert"
 ]
+},
+{
+"id": "da0fad11fd6",
+"imageSrc": "/notes/da0fad11fd6.webp",
+"thumbSrc": "/thumbs/da0fad11fd6.webp",
+"date": "2026-11-02",
+"dateSource": "written",
+"child": "Chase",
+"title": "Snoopy In A Jack-O'-Lantern",
+"tags": [
+"Snoopy",
+"Halloween"
+],
+"series": "Snoopy"
+},
+{
+"id": "da253fd3152",
+"imageSrc": "/notes/da253fd3152.webp",
+"thumbSrc": "/thumbs/da253fd3152.webp",
+"date": "2026-11-02",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Snoopy's Leaf Pile Leap",
+"tags": [
+"Snoopy",
+"Nature"
+],
+"series": "Snoopy"
+},
+{
+"id": "d31d89e5560",
+"imageSrc": "/notes/d31d89e5560.webp",
+"thumbSrc": "/thumbs/d31d89e5560.webp",
+"date": "2026-11-03",
+"dateSource": "written",
+"child": "Chase",
+"title": "Peanut Butter Cup",
+"tags": [
+"Dessert",
+"Halloween"
+]
+},
+{
+"id": "d690243db09",
+"imageSrc": "/notes/d690243db09.webp",
+"thumbSrc": "/thumbs/d690243db09.webp",
+"date": "2026-11-03",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Twix Bar",
+"tags": [
+"Dessert",
+"Halloween"
+]
+},
+{
+"id": "d769dd472f3",
+"imageSrc": "/notes/d769dd472f3.webp",
+"thumbSrc": "/thumbs/d769dd472f3.webp",
+"date": "2026-11-04",
+"dateSource": "written",
+"child": "Chase",
+"title": "Hatchet In A Stump",
+"tags": [
+"Nature"
+],
+"series": "Hatchet"
+},
+{
+"id": "d919937c582",
+"imageSrc": "/notes/d919937c582.webp",
+"thumbSrc": "/thumbs/d919937c582.webp",
+"date": "2026-11-04",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Cool Apple With Shades",
+"tags": [
+"Food"
+]
+},
+{
+"id": "d0282502b34",
+"imageSrc": "/notes/d0282502b34.webp",
+"thumbSrc": "/thumbs/d0282502b34.webp",
+"date": "2026-11-05",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Pizza-Eating Robot",
+"tags": [
+"Robots",
+"Food"
+]
+},
+{
+"id": "dbc457bfc12",
+"imageSrc": "/notes/dbc457bfc12.webp",
+"thumbSrc": "/thumbs/dbc457bfc12.webp",
+"date": "2026-11-05",
+"dateSource": "written",
+"child": "Chase",
+"title": "Pizza-Eating Robot",
+"tags": [
+"Robots",
+"Food"
+]
+},
+{
+"id": "d9e9856faf3",
+"imageSrc": "/notes/d9e9856faf3.webp",
+"thumbSrc": "/thumbs/d9e9856faf3.webp",
+"date": "2026-11-06",
+"dateSource": "written",
+"child": "Chase",
+"title": "Hatchet Bush Plane",
+"tags": [
+"Vehicles"
+],
+"series": "Hatchet"
+},
+{
+"id": "de6f14f1377",
+"imageSrc": "/notes/de6f14f1377.webp",
+"thumbSrc": "/thumbs/de6f14f1377.webp",
+"date": "2026-11-06",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Vinny's V Candy",
+"tags": [
+"Dessert",
+"Halloween"
+]
+},
+{
+"id": "da632917aac",
+"imageSrc": "/notes/da632917aac.webp",
+"thumbSrc": "/thumbs/da632917aac.webp",
+"date": "2026-11-09",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Squirt The Sea Turtle",
+"tags": [
+"Ocean",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "db4762ff160",
+"imageSrc": "/notes/db4762ff160.webp",
+"thumbSrc": "/thumbs/db4762ff160.webp",
+"date": "2026-11-09",
+"dateSource": "written",
+"child": "Chase",
+"title": "Squirt The Sea Turtle",
+"tags": [
+"Ocean",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "d0f3a4ebe93",
+"imageSrc": "/notes/d0f3a4ebe93.webp",
+"thumbSrc": "/thumbs/d0f3a4ebe93.webp",
+"date": "2026-11-10",
+"dateSource": "written",
+"child": "Chase",
+"title": "Bruce The Shark",
+"tags": [
+"Sharks",
+"Ocean",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "d787fd610f6",
+"imageSrc": "/notes/d787fd610f6.webp",
+"thumbSrc": "/thumbs/d787fd610f6.webp",
+"date": "2026-11-10",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Nemo",
+"tags": [
+"Ocean",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "d0261bf744b",
+"imageSrc": "/notes/d0261bf744b.webp",
+"thumbSrc": "/thumbs/d0261bf744b.webp",
+"date": "2026-11-12",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Hank The Octopus",
+"tags": [
+"Ocean",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "d510b001fbc",
+"imageSrc": "/notes/d510b001fbc.webp",
+"thumbSrc": "/thumbs/d510b001fbc.webp",
+"date": "2026-11-12",
+"dateSource": "written",
+"child": "Chase",
+"title": "Hank The Octopus",
+"tags": [
+"Ocean",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "d7b2bdd0d36",
+"imageSrc": "/notes/d7b2bdd0d36.webp",
+"thumbSrc": "/thumbs/d7b2bdd0d36.webp",
+"date": "2026-11-13",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Nigel The Pelican",
+"tags": [
+"Birds",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "dbffab05004",
+"imageSrc": "/notes/dbffab05004.webp",
+"thumbSrc": "/thumbs/dbffab05004.webp",
+"date": "2026-11-13",
+"dateSource": "written",
+"child": "Chase",
+"title": "Gill The Moorish Idol",
+"tags": [
+"Ocean",
+"Pixar"
+],
+"series": "Finding Nemo & Dory"
+},
+{
+"id": "d0a1e309c98",
+"imageSrc": "/notes/d0a1e309c98.webp",
+"thumbSrc": "/thumbs/d0a1e309c98.webp",
+"date": "2026-11-17",
+"dateSource": "written",
+"child": "Chase",
+"title": "Hula Skirt Fish Monster",
+"tags": [
+"Monsters",
+"Movies"
+],
+"series": "Minions"
+},
+{
+"id": "d7504373be9",
+"imageSrc": "/notes/d7504373be9.webp",
+"thumbSrc": "/thumbs/d7504373be9.webp",
+"date": "2026-11-17",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Grinning Tentacle Monster",
+"tags": [
+"Monsters",
+"Movies"
+],
+"series": "Minions"
+},
+{
+"id": "d3822d5e10a",
+"imageSrc": "/notes/d3822d5e10a.webp",
+"thumbSrc": "/thumbs/d3822d5e10a.webp",
+"date": "2026-11-18",
+"dateSource": "written",
+"child": "Chase",
+"title": "Max The Director",
+"tags": [
+"Movies",
+"Characters"
+],
+"series": "Minions"
+},
+{
+"id": "de3cf06bbb1",
+"imageSrc": "/notes/de3cf06bbb1.webp",
+"thumbSrc": "/thumbs/de3cf06bbb1.webp",
+"date": "2026-11-18",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Goomi",
+"tags": [
+"Monsters",
+"Movies"
+],
+"series": "Minions"
+},
+{
+"id": "d0a335de287",
+"imageSrc": "/notes/d0a335de287.webp",
+"thumbSrc": "/thumbs/d0a335de287.webp",
+"date": "2026-11-19",
+"dateSource": "written",
+"child": "Chase",
+"title": "Minion Cameraman",
+"tags": [
+"Minions"
+],
+"series": "Minions"
+},
+{
+"id": "d7d3914315c",
+"imageSrc": "/notes/d7d3914315c.webp",
+"thumbSrc": "/thumbs/d7d3914315c.webp",
+"date": "2026-11-19",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Jazz Hands Minion",
+"tags": [
+"Minions"
+],
+"series": "Minions"
+},
+{
+"id": "d89fcea5ddc",
+"imageSrc": "/notes/d89fcea5ddc.webp",
+"thumbSrc": "/thumbs/d89fcea5ddc.webp",
+"date": "2026-11-20",
+"dateSource": "written",
+"child": "Chase",
+"title": "Armored Warrior Minion",
+"tags": [
+"Minions"
+],
+"series": "Minions"
+},
+{
+"id": "dfdaa5028d2",
+"imageSrc": "/notes/dfdaa5028d2.webp",
+"thumbSrc": "/thumbs/dfdaa5028d2.webp",
+"date": "2026-11-20",
+"dateSource": "written",
+"child": "Vinny",
+"title": "Cowboy Sheriff Minion",
+"tags": [
+"Minions"
+],
+"series": "Minions"
 }
 ]
